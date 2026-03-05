@@ -1,0 +1,28 @@
+.property-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 4px;
+  max-width: 300px;
+}
+
+.address {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.details {
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.flags {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.flag {
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+}
