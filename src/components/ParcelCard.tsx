@@ -1,6 +1,3 @@
-// ParcelCard.tsx
-// Fonts needed in index.html:
-// <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
 interface Badge {
   label: string;
@@ -108,9 +105,9 @@ function MapPlaceholder({ address }: { address: string }) {
     <div
       className="relative overflow-hidden flex-shrink-0"
       style={{
-        width: 140,
+        width: 520,
         height: "100%",
-        minHeight: 140,
+        minHeight: 40,
         borderRadius: "0 12px 12px 0",
         background: "linear-gradient(135deg, #1a3a3a 0%, #0d2e2e 100%)",
       }}
@@ -169,7 +166,7 @@ function MapPlaceholder({ address }: { address: string }) {
             borderRadius: "50% 50% 50% 0",
             background: "#e8a830",
             transform: "rotate(-45deg)",
-            boxShadow: "0 0 6px rgba(232,168,48,0.6)",
+           
           }}
         />
       </div>
@@ -182,7 +179,7 @@ export default function ParcelCard({
   city = "Montgomery AL, 36104",
   facts = "2.6 acres · Vacant 12 yrs · Zoned C-1",
   badges = [
-    { label: "Symbolic", variant: "heritage" },
+    { label: "Heritage", variant: "heritage" },
   ],
   signals = [
     { label: "Food desert — nearest grocery", value: "2.8 mi" },
@@ -197,19 +194,19 @@ export default function ParcelCard({
   return (
     <div
       onClick={onClick}
-      className={`overflow-hidden flex cursor-pointer select-none ${className}  flex justify-center align-middle`}
+      className={`overflow-hidden flex cursor-pointer select-none ${className} flex-col`}
       style={{
         backgroundColor: "#0e3a47",
         border: active
           ? "1px solid rgba(232,168,48,0.5)"
           : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 14,
-        minHeight: 180,
-        boxShadow: active
-          ? "0 0 0 1px rgba(232,168,48,0.2), 0 16px 48px rgba(0,0,0,0.45)"
-          : "0 8px 32px rgba(0,0,0,0.35)",
+        height: 580,
+        // boxShadow: active
+        //   ? "0 0 0 1px rgba(232,168,48,0.2), 0 16px 48px rgba(0,0,0,0.45)"
+        //   : "0 8px 32px rgba(0,0,0,0.35)",
         transition: "all 0.22s ease",
-        maxWidth:380
+        width:520
       }}
     >
       {/* Left content */}
