@@ -197,18 +197,19 @@ export default function ParcelCard({
   return (
     <div
       onClick={onClick}
-      className={`overflow-hidden flex cursor-pointer select-none ${className} max-w-75 flex justify-center align-middle`}
+      className={`overflow-hidden flex cursor-pointer select-none ${className}  flex justify-center align-middle`}
       style={{
         backgroundColor: "#0e3a47",
         border: active
           ? "1px solid rgba(232,168,48,0.5)"
           : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 14,
-        minHeight: 180,
+        
         boxShadow: active
           ? "0 0 0 1px rgba(232,168,48,0.2), 0 16px 48px rgba(0,0,0,0.45)"
           : "0 8px 32px rgba(0,0,0,0.35)",
         transition: "all 0.22s ease",
+        maxWidth:380
       }}
     >
       {/* Left content */}
