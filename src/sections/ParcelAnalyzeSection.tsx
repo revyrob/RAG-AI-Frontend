@@ -1,12 +1,12 @@
 import React from 'react'
-import ParcelCard from './ParcelCard'
+import ParcelCard from '../components/ParcelCard'
 
 
 export default function ParcelAnalyzeSection (){
   return (
     <div className='flex flex-col'>
-     <h1 className='pt-4 pb-4 text-black font-section'>SELECT A PARCEL TO ANALYZE</h1>
-    <div className='flex justify-between flex-row overflow-auto'>
+     <h1 className='p-4 pl-10 text-black font-section'>SELECT A PARCEL TO ANALYZE</h1>
+    <div className='flex justify-around flex-row overflow-auto'>
        
          <ParcelCard
   address="1100 W Jeff Davis Ave"
