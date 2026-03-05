@@ -204,7 +204,7 @@ export default function ParcelCard({
           ? "1px solid rgba(232,168,48,0.5)"
           : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 14,
-        
+        minHeight: 180,
         boxShadow: active
           ? "0 0 0 1px rgba(232,168,48,0.2), 0 16px 48px rgba(0,0,0,0.45)"
           : "0 8px 32px rgba(0,0,0,0.35)",
