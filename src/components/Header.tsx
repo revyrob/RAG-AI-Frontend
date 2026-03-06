@@ -27,7 +27,7 @@ export default function Header({ className = "" }: HeaderProps) {
       />
 
       <div
-        className="relative z-10 pt-8 max-w-6xl pb-8"
+        className="relative z-10 pt-8 pb-8"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(6px)",
@@ -107,7 +107,6 @@ export default function Header({ className = "" }: HeaderProps) {
             fontSize: "clamp(0.72rem, 1.1vw, 0.8rem)",
             color: "#FFF8F8",
             lineHeight: 1.7,
-            maxWidth: "680px",
             letterSpacing: "0.01em",
               textAlign:"left",
               marginLeft:"2rem",
