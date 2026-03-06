@@ -1,6 +1,7 @@
 
 import './App.css'
 import Header from './components/Header'
+import PropertyCard from './components/PropertyCard';
 import BreakDown from './sections/BreakDown'
 import ParcelAnalyzeSection from './sections/ParcelAnalyzeSection'
 
@@ -25,6 +26,7 @@ function App() {
     <>
       <Header/>
      <ParcelAnalyzeSection/>
+     <PropertyCard address={properties[1].address} details={properties[1].details}/>
      <BreakDown/>
 </>
   )
