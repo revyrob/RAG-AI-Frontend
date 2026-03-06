@@ -1,7 +1,10 @@
+import { useState, useEffect, useRef } from "react";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Badge {
   label: string;
-  variant: "heritage" | "food" | "grant" | "default";
+  variant: "heritage" | "food" | "grant" | "default" | "ix_hub" | "food_desert";
 }
 
 interface Signal {
@@ -16,58 +19,57 @@ interface ParcelCardProps {
   facts: string;
   badges?: Badge[];
   signals?: Signal[];
-  mapImageUrl?: string;
   onClick?: () => void;
+  onHover?: () => void;
   active?: boolean;
   className?: string;
+  /** Height of the map section in px. Default: 200 */
+  mapHeight?: number;
+  /** Zoom level passed to Leaflet. Default: 16 */
+  mapZoom?: number;
 }
 
-const BADGE_STYLES: Record<Badge["variant"], { bg: string; text: string; border: string; dot: string, icon?:string, padding:string, borderRadius:string }> = {
-  heritage: {
-    bg: "rgba(74, 196, 238, 0.49)",
-    text: "#C4911A",
-    border: "rgba(249,115,22,0.3)",
-    dot: "#f97316",
-    icon: "🏛️",
-    padding: ".2rem .35rem",
-    borderRadius: "5px"
-  },
-  food: {
-    bg: "rgba(232,168,48,0.15)",
-    text: "#e8a830",
-    border: "rgba(232,168,48,0.3)",
-    dot: "#e8a830",
-    icon: "🏛️",
-    padding: ".25rem",
-    borderRadius: "5px"
-  },
-  grant: {
-    bg: "rgba(74,222,128,0.12)",
-    text: "#4ade80",
-    border: "rgba(74,222,128,0.3)",
-    dot: "#4ade80",
-    icon: "🏛️",
-    padding: ".25rem",
-    borderRadius: "5px"
-  },
-  default: {
-    bg: "rgba(255,255,255,0.08)",
-    text: "rgba(255,255,255,0.7)",
-    border: "rgba(255,255,255,0.15)",
-    dot: "rgba(255,255,255,0.5)",
-    icon: "🏛️",
-    padding: ".2rem .35rem",
-    borderRadius: "5px"
-  },
+// ── Geocoder ──────────────────────────────────────────────────────────────────
+// Uses Nominatim (free, no key). Falls back to Montgomery city centre on error.
+
+const geocodeCache: Record<string, { lat: number; lon: number }> = {};
+
+async function geocodeAddress(address: string, city = ""): Promise<{ lat: number; lon: number }> {
+  const query = [address, city].filter(Boolean).join(", ");
+  if (geocodeCache[query]) return geocodeCache[query];
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+    const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
+    const data = await res.json();
+    if (data.length > 0) {
+      const result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      geocodeCache[query] = result;
+      return result;
+    }
+  } catch (_) {}
+
+  // Fallback: Montgomery, AL city centre
+  return { lat: 32.3792, lon: -86.3077 };
+}
+
+// ── Badge styles ──────────────────────────────────────────────────────────────
+
+const BADGE_STYLES: Record<string, { text: string; border: string; icon?: string }> = {
+  heritage:    { text: "#C4911A",              border: "rgba(249,115,22,0.3)",  icon: "🏛️" },
+  food:        { text: "#e8a830",              border: "rgba(232,168,48,0.3)",  icon: "🌽" },
+  food_desert: { text: "#e8a830",              border: "rgba(232,168,48,0.3)",  icon: "🌽" },
+  ix_hub:      { text: "#4ade80",              border: "rgba(74,222,128,0.3)",  icon: "⚡" },
+  grant:       { text: "#4ade80",              border: "rgba(74,222,128,0.3)",  icon: "💰" },
+  default:     { text: "rgba(255,255,255,0.7)",border: "rgba(255,255,255,0.15)",icon: "🏛️" },
 };
 
 function BadgeTag({ label, variant }: Badge) {
-  const s = BADGE_STYLES[variant];
+  const s = BADGE_STYLES[variant] ?? BADGE_STYLES["default"];
   return (
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
       style={{
-        backgroundColor: s.bg,
         color: s.text,
         border: `1px solid ${s.border}`,
         fontFamily: "'IBM Plex Mono', monospace",
@@ -76,219 +78,255 @@ function BadgeTag({ label, variant }: Badge) {
         textTransform: "uppercase",
       }}
     >
-      {s.icon && s.icon.startsWith("/") ? (
-        // PNG image
-        <img
-          src={s.icon}
-          alt=""
-          style={{ width: 12, height: 12, objectFit: "contain" }}
-        />
-      ) : s.icon ? (
-        // Emoji
-        <span style={{ fontSize: "0.75rem" }}>{s.icon}</span>
-      ) : (
-        // Default dot
-        <span
-          style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: s.dot, display: "inline-block" }}
-        />
-      )}
+      {s.icon && <span style={{ fontSize: "0.75rem" }}>{s.icon}</span>}
       {label}
     </span>
   );
 }
 
-// Placeholder map using OpenStreetMap static-style iframe embed
-function MapPlaceholder({ address }: { address: string }) {
-  // Use a static map image via OpenStreetMap tiles approximation
-  // In production, swap with Mapbox/Google Static Maps API
+// ── Leaflet singleton loader ──────────────────────────────────────────────────
+// Script + CSS are injected only once no matter how many cards are on screen.
+
+let leafletPromise: Promise<void> | null = null;
+
+function loadLeaflet(): Promise<void> {
+  if (leafletPromise) return leafletPromise;
+  leafletPromise = new Promise<void>((resolve, reject) => {
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id   = "leaflet-css";
+      link.rel  = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    if ((window as any).L) { resolve(); return; }
+    const script    = document.createElement("script");
+    script.src      = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload   = () => resolve();
+    script.onerror  = () => reject(new Error("Leaflet failed to load"));
+    document.head.appendChild(script);
+  });
+  return leafletPromise;
+}
+
+// ── LeafletMap ────────────────────────────────────────────────────────────────
+// The div gets an EXPLICIT pixel height so Leaflet always has a measured
+// container. invalidateSize() is called after paint for safety.
+
+interface LeafletMapProps {
+  lat: number;
+  lon: number;
+  zoom: number;
+  height: number;
+}
+
+function LeafletMap({ lat, lon, zoom, height }: LeafletMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef       = useRef<any>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let destroyed = false;
+
+    loadLeaflet().then(() => {
+      if (destroyed || !containerRef.current) return;
+      const L = (window as any).L;
+
+      // Always destroy the previous instance before creating a new one
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+
+      const map = L.map(containerRef.current, {
+        center:             [lat, lon],
+        zoom,
+        zoomControl:        false,
+        attributionControl: false,
+        dragging:           false,
+        scrollWheelZoom:    false,
+        doubleClickZoom:    false,
+        boxZoom:            false,
+        keyboard:           false,
+        tap:                false,
+      });
+
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        { maxZoom: 19 }
+      ).addTo(map);
+
+      // Amber teardrop pin
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="
+          width:12px;height:12px;
+          border-radius:50% 50% 50% 0;
+          background:#e8a830;
+          transform:rotate(-45deg);
+          border:2px solid rgba(255,255,255,0.9);
+        "></div>`,
+        iconSize:   [12, 12],
+        iconAnchor: [6, 12],
+      });
+
+      L.marker([lat, lon], { icon }).addTo(map);
+
+      // Let the browser finish painting before telling Leaflet to resize
+      requestAnimationFrame(() => {
+        if (!destroyed) map.invalidateSize();
+      });
+
+      mapRef.current = map;
+    }).catch(console.error);
+
+    return () => {
+      destroyed = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [lat, lon, zoom]);
+
   return (
     <div
-      className="relative overflow-hidden flex-shrink-0"
+      ref={containerRef}
+      style={{ width: "100%", height, display: "block" }}
+    />
+  );
+}
+
+// ── MapSection ────────────────────────────────────────────────────────────────
+
+interface MapSectionProps {
+  address: string;
+  city?: string;
+  height: number;
+  zoom: number;
+}
+
+function MapSection({ address, city, height, zoom }: MapSectionProps) {
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    geocodeAddress(address, city).then(setCoords);
+  }, [address, city]);
+
+  const resolvedLat = coords?.lat ?? 32.3792;
+  const resolvedLon = coords?.lon ?? -86.3077;
+
+  return (
+    <div
       style={{
-        width: 520,
-        height: "100%",
-        minHeight: 40,
-        borderRadius: "0 12px 12px 0",
-        background: "linear-gradient(135deg, #1a3a3a 0%, #0d2e2e 100%)",
+        position:     "relative",
+        width:        "100%",
+        height,
+        flexShrink:   0,
+        borderRadius: "0 0 12px 12px",
+        overflow:     "hidden",
+        background:   "#0a2030",
       }}
     >
-      {/* Map grid lines to simulate street map */}
-      <svg
-        className="absolute inset-0 w-full h-full opacity-30"
-        viewBox="0 0 140 160"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Road grid */}
-        <rect width="140" height="160" fill="#1a3d3d" />
-        {/* Horizontal roads */}
-        <line x1="0" y1="40" x2="140" y2="40" stroke="#2dd4bf" strokeWidth="3" opacity="0.4" />
-        <line x1="0" y1="90" x2="140" y2="90" stroke="#2dd4bf" strokeWidth="2" opacity="0.25" />
-        <line x1="0" y1="130" x2="140" y2="130" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.2" />
-        {/* Vertical roads */}
-        <line x1="35" y1="0" x2="35" y2="160" stroke="#2dd4bf" strokeWidth="3" opacity="0.4" />
-        <line x1="90" y1="0" x2="90" y2="160" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.2" />
-        {/* Parcel highlight */}
-        <rect x="42" y="45" width="44" height="40" fill="#e8a830" opacity="0.35" rx="2" />
-        <rect x="42" y="45" width="44" height="40" fill="none" stroke="#e8a830" strokeWidth="1.5" rx="2" opacity="0.8" />
-        {/* Block fills */}
-        <rect x="95" y="45" width="30" height="18" fill="rgba(255,255,255,0.05)" rx="1" />
-        <rect x="95" y="68" width="30" height="16" fill="rgba(255,255,255,0.05)" rx="1" />
-        <rect x="42" y="92" width="44" height="20" fill="rgba(255,255,255,0.04)" rx="1" />
-        <rect x="6" y="45" width="24" height="38" fill="rgba(255,255,255,0.04)" rx="1" />
-      </svg>
+      <LeafletMap lat={resolvedLat} lon={resolvedLon} zoom={zoom} height={height} />
 
-      {/* Compass / north indicator */}
-      <div
-        className="absolute top-2 right-2 flex items-center justify-center"
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          background: "rgba(0,0,0,0.4)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.5rem",
-          color: "rgba(255,255,255,0.6)",
-        }}
-      >
-        N
+      {/* Coordinate pill */}
+      <div style={{
+        position: "absolute", bottom: 8, left: 8, zIndex: 999,
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55rem",
+        color: "rgba(255,255,255,0.7)", background: "rgba(0,0,0,0.55)",
+        padding: "2px 7px", borderRadius: 4, pointerEvents: "none",
+        letterSpacing: "0.04em",
+      }}>
+        {resolvedLat.toFixed(4)}, {resolvedLon.toFixed(4)}
       </div>
 
-      {/* Pin */}
-      <div
-        className="absolute"
-        style={{ top: "42%", left: "43%", transform: "translate(-50%,-50%)" }}
-      >
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50% 50% 50% 0",
-            background: "#e8a830",
-            transform: "rotate(-45deg)",
-           
-          }}
-        />
+      {/* Compass */}
+      <div style={{
+        position: "absolute", top: 8, right: 8, zIndex: 999,
+        width: 20, height: 20, borderRadius: "50%",
+        background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.5rem",
+        color: "rgba(255,255,255,0.7)", pointerEvents: "none",
+      }}>
+        N
       </div>
     </div>
   );
 }
 
+// ── ParcelCard ────────────────────────────────────────────────────────────────
+
 export default function ParcelCard({
-  address = "1100 W Jeff Davis Ave",
-  city = "Montgomery AL, 36104",
-  facts = "2.6 acres · Vacant 12 yrs · Zoned C-1",
-  badges = [
-    { label: "Heritage", variant: "heritage" },
-  ],
-  signals = [
-    { label: "Food desert — nearest grocery", value: "2.8 mi" },
-    { label: "Median income", value: "$22,400" },
-    { label: "HUD CDBG OPEN —", value: "47 days left", urgent: true },
-  ],
-//   mapImageUrl,
+  address   = "1100 W Jeff Davis Ave",
+  city      = "Montgomery AL, 36104",
+  facts     = "2.6 acres · Vacant 12 yrs · Zoned C-1",
+  badges    = [],
+  signals   = [],
   onClick,
-  active = false,
+  onHover,
+  active    = false,
   className = "",
+  mapHeight = 250,  // ← adjust map height here
+  mapZoom   = 16,   // ← adjust zoom level here
 }: ParcelCardProps) {
+  const [hovered, setHovered] = useState(false);
+  const isHighlighted = active || hovered;
+
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => { setHovered(true); onHover?.(); }}
+      onMouseLeave={() => setHovered(false)}
       className={`overflow-hidden flex cursor-pointer select-none ${className} flex-col`}
       style={{
         backgroundColor: "#0e3a47",
-        border: active
-          ? "1px solid rgba(232,168,48,0.5)"
-          : "1px solid rgba(255,255,255,0.1)",
+        border:       isHighlighted ? "1px solid rgba(232,168,48,0.8)" : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 14,
-        height: 580,
-        // boxShadow: active
-        //   ? "0 0 0 1px rgba(232,168,48,0.2), 0 16px 48px rgba(0,0,0,0.45)"
-        //   : "0 8px 32px rgba(0,0,0,0.35)",
-        transition: "all 0.22s ease",
-        width:520
+        height:       580,
+        boxShadow:    isHighlighted
+          ? "0 0 0 2px rgba(232,168,48,0.25), 0 4px 9px rgba(0,0,0,0.45)"
+          : "",
+        transition:   "all 0.22s ease",
+        width:        520,
+        transform:    isHighlighted ? "translateY(-4px)" : "translateY(0)",
       }}
     >
-      {/* Left content */}
+      {/* Info */}
       <div className="flex flex-col flex-1 p-5 gap-2.5 min-w-0">
-        {/* Badges row */}
-        {badges.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {badges.map((b, i) => (
-              <BadgeTag key={i} {...b} />
-            ))}
-          </div>
-        )}
-
-        {/* Address */}
-        <div>
-          <h2
-            className="text-white leading-tight"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
-              fontSize: "clamp(1.1rem, 2vw, 1.3rem)",
-              letterSpacing: "-0.01em",
-              color:"#ffffff"
-            }}
-          >
-            {address}
-          </h2>
-        </div>
-
-        {/* Facts + city */}
-        <div
+        <h2
+          className="leading-tight"
           style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "0.75rem",
-            color: "rgba(255,255,255,0.55)",
-            lineHeight: 1.5,
+            fontFamily: "'Outfit', sans-serif", fontWeight: 700,
+            fontSize: "clamp(1.1rem, 2vw, 1.3rem)", letterSpacing: "-0.01em",
+            color: "#ffffff",
           }}
         >
+          {address}
+        </h2>
+
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>
           <div>{facts}</div>
           <div>{city}</div>
         </div>
 
-        {/* Divider */}
-        <div
-          style={{
-            height: 1,
-            background: "rgba(255,255,255,0.08)",
-            margin: "2px 0",
-          }}
-        />
+        {badges.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {badges.map((b, i) => <BadgeTag key={i} {...b} />)}
+          </div>
+        )}
 
-        {/* Signals */}
+        <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "2px 0" }} />
+
         <ul className="flex flex-col gap-1.5">
           {signals.map((s, i) => (
-            <li
-              key={i}
-              className="flex items-baseline gap-1"
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: "0.74rem",
-                color: "rgba(255,255,255,0.65)",
-                lineHeight: 1.4,
-              }}
-            >
-              <span
-                style={{
-                  color: s.urgent ? "#4ade80" : "rgba(255,255,255,0.35)",
-                  fontSize: "0.55rem",
-                  marginTop: 1,
-                  flexShrink: 0,
-                }}
-              >
-                ●
-              </span>
+            <li key={i} className="flex items-baseline gap-1"
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: "0.74rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.4 }}>
+              <span style={{ color: s.urgent ? "#4ade80" : "rgba(255,255,255,0.35)", fontSize: "0.55rem", marginTop: 1, flexShrink: 0 }}>●</span>
               <span>
                 {s.label}{" "}
-                <span
-                  style={{
-                    color: s.urgent ? "#4ade80" : "rgba(255,255,255,0.88)",
-                    fontWeight: 600,
-                  }}
-                >
+                <span style={{ color: s.urgent ? "#4ade80" : "rgba(255,255,255,0.88)", fontWeight: 600 }}>
                   {s.value}
                 </span>
               </span>
@@ -297,8 +335,8 @@ export default function ParcelCard({
         </ul>
       </div>
 
-      {/* Right map */}
-      <MapPlaceholder address={address} />
+      {/* Map */}
+      <MapSection address={address} city={city} height={mapHeight} zoom={mapZoom} />
     </div>
   );
 }
