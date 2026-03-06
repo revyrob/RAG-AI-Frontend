@@ -215,32 +215,40 @@ export default function Grants() {
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Lora:wght@700&family=Outfit:wght@400;500&display=swap');
       `}</style>
 
-      <div className=" bg-white flex items-start justify-center px-6 py-12">
-        <div className="w-[50%] ">
+      <div className=" bg-white pl-6  py-12">
+        <div className="">
 
           {/* ── Header ── */}
+          {/* ── Section title ── */}
           <div
-            className="flex items-center gap-2 mb-6"
+            className="flex items-center gap-2.5 mb-4"
             style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.4s ease",
+             
+              transition: "opacity 0.4s ease, transform 0.4s ease",
+              transitionDelay: "80ms",
+             
             }}
           >
-            <span style={{ fontSize: 16 }}>💰</span>
+           
             <h2
-              className="text-xs font-semibold tracking-[0.18em] uppercase"
+              className="text-sm font-bold tracking-[0.18em] uppercase"
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                color: "#C4911A",
-                textDecoration: "underline",
-                textUnderlineOffset: "3px",
-                textDecorationColor: "#C4911A",
+                color: "#000000",
               }}
             >
-              Grants.gov — Live Status
+             Grants.gov — Live Status
             </h2>
           </div>
 
+          {/* ── Divider ── */}
+          <div
+            className="mb-4 h-px"
+            style={{ backgroundColor: "#CCC9C9",  transition: "opacity 0.4s ease", transitionDelay: "140ms" }}
+          />
+
+
+       
           {/* ── Grant list ── */}
           <div className="flex flex-col gap-5">
             {grants.map((grant, i) => (
