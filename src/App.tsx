@@ -3,6 +3,7 @@ import './App.css'
 import Header from './components/Header'
 import BreakDown from './sections/BreakDown'
 import ParcelAnalyzeSection from './sections/ParcelAnalyzeSection'
+import ChatArea from './sections/ChatArea'
 
 interface Coords {
   lat: number
@@ -27,6 +28,7 @@ function App() {
   const [parcels, setParcels] = useState<Parcel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
 
   useEffect(() => {
     fetch('http://127.0.0.1:8000/parcels')
@@ -35,7 +37,7 @@ function App() {
         setParcels(data.parcels)
         setLoading(false)
       })
-      .catch(err => {
+      .catch(() => {
         setError('Failed to connect to API')
         setLoading(false)
       })
@@ -47,11 +49,22 @@ function App() {
   return (
     <>
       <Header />
-      <ParcelAnalyzeSection parcels={parcels} />
-      <BreakDown parcels={parcels} />
+      <ParcelAnalyzeSection
+        parcels={parcels}
+        selectedParcel={selectedParcel}
+        onSelectParcel={setSelectedParcel}
+      />
+      <BreakDown
+        parcels={parcels}
+        selectedParcel={selectedParcel}
+      />
+      <ChatArea
+        parcels={parcels}
+        selectedParcel={selectedParcel}
+        onSelectParcel={setSelectedParcel}
+      />
     </>
   )
 }
 
 export default App
-
