@@ -1,8 +1,9 @@
 
-import React from "react";
-import './App.css';
-import Header from './components/Header';
-import PropertyCard from "./components/PropertyCard";
+import './App.css'
+import Header from './components/Header'
+import PropertyCard from './components/PropertyCard';
+import BreakDown from './sections/BreakDown'
+import ParcelAnalyzeSection from './sections/ParcelAnalyzeSection'
 
 function App() {
   // Tableau de propriétés
@@ -22,18 +23,13 @@ function App() {
   ];
 
   return (
-    <div className="App">
-      <Header />
-      <h1>Liste des propriétés</h1>
-      {properties.map((prop, index) => (
-        <PropertyCard
-          key={index}
-          address={prop.address}
-          details={prop.details}
-        />
-      ))}
-    </div>
-  );
+    <>
+      <Header/>
+     <ParcelAnalyzeSection/>
+     <PropertyCard address={properties[1].address} details={properties[1].details}/>
+     <BreakDown/>
+</>
+  )
 }
 
 export default App;

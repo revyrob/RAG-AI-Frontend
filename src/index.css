@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital@0;1&family=Outfit:wght@300;400;500;700&display=swap");
-
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');@import "tailwindcss";
 @theme {
   /* --color-gray-20: #F8F4EB;
   --color-gray-50: #EFE6E6;
@@ -14,8 +13,9 @@
   --color-secondary-400: #294C60;
   --color-secondary-500: #77966D; */
 
-  /* --font-header: "Montserrat", sans-serif;
-  --font-body: "noto-sans", sans-serif; */
+  --font-header: "Montserrat", sans-serif;
+  --font-body: "noto-sans", sans-serif;
+  --font-section: "IBM Plex Mono", monospace;
 
   /* --background-gradient-grey: linear-gradient(
     90deg,
@@ -36,6 +36,11 @@
   .font-body {
     font-family: "outfit", sans-serif;
     font-weight: 200;
+  font-style: normal;
+  }
+  .font-section {
+    font-family: "IBM Plex Mono", monospace;
+  font-weight: 500;
   font-style: normal;
   }
  .text-stroke {

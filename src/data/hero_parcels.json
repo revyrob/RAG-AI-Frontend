@@ -1,0 +1,65 @@
+[
+  {
+    "address": "188, Oak Forest Drive, Montgomery, Alabama, 36109",
+    "avg_dist": 2.9615982583974945,
+    "min_dist": 1.8689577349793478,
+    "nearest_anchor": "ASU Campus",
+    "distances": {
+      "MGMix (IX)": 2.510832932466818,
+      "The Legacy Museum": 2.5241228378256153,
+      "Rosa Parks Museum": 2.622101012219498,
+      "ASU Campus": 1.8689577349793478,
+      "Maxwell AFB Gate": 5.281976774496192
+    },
+    "owner": "CITY OF MONTGOMERY                                                                                                                                                                                                                                             ",
+    "parcel_id": "10 02 09 3 016 016.000            ",
+    "acres": 0.32799659,
+    "zip": "36101              ",
+    "coords": [
+      32.37758077123323,
+      -86.2670719037647
+    ]
+  },
+  {
+    "address": "1600, Jackson Ferry Road, Montgomery, Alabama, 36104",
+    "avg_dist": 2.665455377579849,
+    "min_dist": 1.951519870476572,
+    "nearest_anchor": "The Legacy Museum",
+    "distances": {
+      "MGMix (IX)": 2.154488623019468,
+      "The Legacy Museum": 1.951519870476572,
+      "Rosa Parks Museum": 2.209516521359455,
+      "ASU Campus": 3.1039152196352373,
+      "Maxwell AFB Gate": 3.9078366534085123
+    },
+    "owner": "CITY OF MONTGOMERY                                                                                                                                                                                                                                             ",
+    "parcel_id": "04 09 31 3 001 024.000            ",
+    "acres": 0.16863489,
+    "zip": "36101              ",
+    "coords": [
+      32.40814266957176,
+      -86.30392329480777
+    ]
+  },
+  {
+    "address": "1799, Jackson Ferry Road, Montgomery, Alabama, 36104",
+    "avg_dist": 2.6826560759352844,
+    "min_dist": 1.9728346320236891,
+    "nearest_anchor": "The Legacy Museum",
+    "distances": {
+      "MGMix (IX)": 2.176597456117533,
+      "The Legacy Museum": 1.9728346320236891,
+      "Rosa Parks Museum": 2.2297160654406483,
+      "ASU Campus": 3.1381111213862756,
+      "Maxwell AFB Gate": 3.8960211047082756
+    },
+    "owner": "CITY OF MONTGOMERY                                                                                                                                                                                                                                             ",
+    "parcel_id": "04 09 31 3 002 014.000            ",
+    "acres": 0.46611841,
+    "zip": "36101              ",
+    "coords": [
+      32.408550666963734,
+      -86.30454425881211
+    ]
+  }
+]
