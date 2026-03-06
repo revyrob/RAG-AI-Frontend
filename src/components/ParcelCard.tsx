@@ -284,7 +284,7 @@ export default function ParcelCard({
         backgroundColor: "#0e3a47",
         border:       isHighlighted ? "1px solid rgba(232,168,48,0.8)" : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 14,
-        height:       580,
+        height:       450,
         boxShadow:    isHighlighted
           ? "0 0 0 2px rgba(232,168,48,0.25), 0 4px 9px rgba(0,0,0,0.45)"
           : "",
