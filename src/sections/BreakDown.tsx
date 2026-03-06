@@ -1,4 +1,5 @@
 import AiRecommendations from "../components/AiRecommendations"
+import CommunityHealth from "../components/CommunityHealth"
 import FootTraffic from "../components/FootTraffic"
 import GrantsLiveStatus from "../components/Grants"
 
@@ -15,6 +16,7 @@ export default function BreakDown(props: Props) {
         <div className='flex-1'>
           <FootTraffic />
           <GrantsLiveStatus />
+          <CommunityHealth />
         </div>
       </div>
     </div>
