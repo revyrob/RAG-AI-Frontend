@@ -1,0 +1,15 @@
+.parcel-card {
+  background: #0f3d46;
+  border-radius: 16px;
+  padding: 20px;
+  height: 100%;
+  transition: transform 0.2s ease;
+}
+
+.parcel-card:hover {
+  transform: translateY(-4px);
+}
+
+.parcel-card.active {
+  border: 2px solid #facc15;
+}

@@ -1,21 +1,47 @@
-import React from "react";
-import "./PropertyCard.css";
+import { useEffect, useState } from "react";
+import { fetch311Requests } from "../utils/api_311";
 
-interface Props {
+interface Property {
   address: string;
-  details: string;
+  district: string;
+  latitude: number;
+  longitude: number;
 }
 
-const PropertyCard: React.FC<Props> = ({ address, details }) => {
+interface Request311 {
+  Request_ID: number;
+  Request_Type: string;
+  Status: string;
+  coordinates_missing: boolean;
+}
+
+interface Props {
+  property: Property;
+}
+
+const PropertyCard: React.FC<Props> = ({ property }) => {
+  const [requests, setRequests] = useState<Request311[]>([]);
+  const { latitude, longitude } = property;
+
+  useEffect(() => {
+    if (latitude && longitude) {
+      fetch311Requests(latitude, longitude, 0.1).then(setRequests);
+    }
+  }, [latitude, longitude]);
+
   return (
     <div className="property-card">
-      <div className="address">{address}</div>
-      <div className="details">{details}</div>
-      <div className="flags">
-        <div className="flag"></div>
-        <div className="flag"></div>
-        <div className="flag"></div>
-      </div>
+      <h2>{property.address}</h2>
+      <p>{property.district}</p>
+      <h3>Nearby 311 Requests ({requests.length})</h3>
+      <ul>
+        {requests.map((req) => (
+          <li key={req.Request_ID}>
+            {req.Request_Type} — {req.Status}
+            {req.coordinates_missing && " (coordinates missing)"}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

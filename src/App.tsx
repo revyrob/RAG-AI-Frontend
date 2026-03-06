@@ -1,5 +1,4 @@
 
-import React from "react";
 import './App.css';
 import Header from './components/Header';
 import ParcelAnalyzeSection from './components/ParcelAnalyzeSection';
@@ -10,15 +9,21 @@ function App() {
   const properties = [
     {
       address: "1100 W Jeff Davis Ave, Montgomery AL 36104",
-      details: "2.6 acres | Vacant 12 yrs | Zoned C",
+      district: "Downtown",
+      latitude: 32.3668,
+      longitude: -86.2999,
     },
     {
       address: "123 Main St, Example City",
-      details: "1.2 acres | Occupied | Zoned R",
+      district: "Central",
+      latitude: 32.37,
+      longitude: -86.30,
     },
     {
       address: "456 Oak Rd, Sample Town",
-      details: "3.5 acres | Vacant 5 yrs | Zoned I",
+      district: "Suburban",
+      latitude: 32.35,
+      longitude: -86.25,
     },
   ];
 
@@ -31,8 +36,7 @@ function App() {
         {properties.map((prop, index) => (
           <PropertyCard
             key={index}
-            address={prop.address}
-            details={prop.details}
+            property={prop}
           />
         ))}
       </div>

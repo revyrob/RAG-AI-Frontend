@@ -4,7 +4,7 @@
 
 interface Badge {
   label: string;
-  variant: "heritage" | "food" | "grant" | "default";
+  variant: string;
 }
 
 interface Signal {
@@ -101,7 +101,7 @@ function BadgeTag({ label, variant }: Badge) {
 }
 
 // Placeholder map using OpenStreetMap static-style iframe embed
-function MapPlaceholder({ address }: { address: string }) {
+function MapPlaceholder() {
   // Use a static map image via OpenStreetMap tiles approximation
   // In production, swap with Mapbox/Google Static Maps API
   return (
@@ -301,7 +301,7 @@ export default function ParcelCard({
       </div>
 
       {/* Right map */}
-      <MapPlaceholder address={address} />
+      <MapPlaceholder />
     </div>
   );
 }
