@@ -36,7 +36,7 @@ const DEFAULT_DATA: Recommendation[] = [
 
 function ScoreBar({ score, animate }: { score: number; animate: boolean }) {
   return (
-    <div className="relative h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: "#CCC9C9" }}>
+    <div className="relative h-1.5 w-[50%] rounded-full overflow-hidden" style={{ backgroundColor: "#CCC9C9" }}>
       <div
         className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
         style={{
@@ -176,8 +176,8 @@ export default function AiRecommendations() {
 
       <div className=" bg-white flex items-start justify-center px-6 py-12">
         <div className="">
-
-          {/* Header */}
+{/* 
+          Header
           <div className="mb-8">
             
             <h1
@@ -190,7 +190,7 @@ export default function AiRecommendations() {
               className="mt-2 h-px w-16"
               style={{ backgroundColor: "#C4911A" }}
             />
-          </div>
+          </div> */}
 
           {/* Cards */}
           <div className="flex flex-col gap-8">

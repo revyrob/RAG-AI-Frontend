@@ -16,22 +16,7 @@ const DEFAULT_DATA: FootTrafficData = {
   trafficSummary: "Low foot traffic zone — below city average",
 };
 
-// ─── Pulsing dot ─────────────────────────────────────────────────────────────
 
-function PulseDot() {
-  return (
-    <span className="relative flex h-2 w-2">
-      <span
-        className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-        style={{ backgroundColor: "#3DDC84" }}
-      />
-      <span
-        className="relative inline-flex rounded-full h-2 w-2"
-        style={{ backgroundColor: "#3DDC84" }}
-      />
-    </span>
-  );
-}
 
 // ─── Foot Traffic SVG icon ────────────────────────────────────────────────────
 
@@ -113,41 +98,10 @@ export default function FootTraffic() {
 
       `}</style>
 
-      <div className=" bg-white flex items-start justify-center px-6 py-12">
-        <div className="w-[50%] ">
+      <div className=" bg-white flex pl-6  py-12">
+        <div className="">
 
-          {/* ── Live Signals badge row ── */}
-          <div
-            className="flex items-center gap-3 mb-6"
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.4s ease",
-              transitionDelay: "0ms",
-            }}
-          >
-            <span
-              className="text-sm"
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                color: "#737171",
-              }}
-            >
-              Live Signals
-            </span>
-
-            <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-widest"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                backgroundColor: "#e6fdf2",
-                color: "#1a7a45",
-                border: "1px solid #3DDC84",
-              }}
-            >
-              <PulseDot />
-              REAL - TIME
-            </span>
-          </div>
+       
 
           {/* ── Section title ── */}
           <div
