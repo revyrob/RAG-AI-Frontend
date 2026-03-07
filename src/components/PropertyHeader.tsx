@@ -1,69 +1,59 @@
-import { useEffect } from "react";
-import type { Parcel } from "../types";
+import type { ParcelScore } from "../hooks/useParcelScore"
 
-interface PropertyHeaderProps {
-  parcel?: Parcel | null;
+interface Props {
+  parcel: ParcelScore | null
 }
 
-export default function PropertyHeader({ parcel }: PropertyHeaderProps) {
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-  }, []);
+export default function PropertyHeader({ parcel }: Props) {
+  if (!parcel) return null
+
+  const urgencyFlag = parcel.ai_analysis?.urgency_flag
+  const urgencyColor =
+    urgencyFlag === "high"     ? "#b91c1c"
+    : urgencyFlag === "medium" ? "#92620a"
+    : "#1a7a45"
+
+  const minDist    = parcel.min_dist != null ? Number(parcel.min_dist).toFixed(3) : "—"
+  const finalScore = parcel.scores?.final ?? "—"
 
   return (
-    <div className="flex items-start justify-between px-6 py-3 bg-white border-b pb-8">
-      {/* Left: Address + meta */}
-      <div className="flex flex-col gap-1">
-        <h2
-          className="font-bold text-gray-900 tracking-tight"
-          style={{ fontFamily: "'Lora', serif", fontSize: "20px" }}
-        >
-          {parcel?.address ?? "No parcel selected"}
+    <div
+      className="px-10 pb-4 flex items-start justify-between gap-4"
+      style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+    >
+      <div>
+        <h2 className="text-base font-bold text-black leading-snug">
+          {parcel.label ?? parcel.story ?? "Parcel"}
         </h2>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span>{parcel?.acres?.toFixed(1) ?? "—"} acres</span>
-          <span className="text-gray-300">·</span>
-          <span>Zoned {parcel?.zone_context ?? "—"}</span>
-          <span className="text-gray-300">·</span>
-          <span>{parcel?.nearest_anchor ?? "—"}</span>
-        </div>
+        <p className="text-xs text-gray-500 mt-0.5">{parcel.address}</p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {parcel.acres} acres
+          {parcel.nearest_anchor ? ` · ${parcel.nearest_anchor} (${minDist} mi)` : ""}
+          {parcel.owner ? ` · ${parcel.owner}` : ""}
+        </p>
       </div>
 
-      {/* Right: Flag badges */}
-      <div className="flex items-center gap-2 mt-1">
-        {parcel ? (
-          <>
-            <span
-              className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
-              style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
-            >
-              {parcel.story}
-            </span>
-            <span
-              className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
-              style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
-            >
-              {parcel.open_grants} grants open
-            </span>
-            <span
-              className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
-              style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
-            >
-              {parcel.min_dist_miles} mi to anchor
-            </span>
-          </>
-        ) : (
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">RISE Score</span>
+          <span className="text-2xl font-black text-black tabular-nums">
+            {finalScore}
+          </span>
+          <span className="text-xs text-gray-400">/100</span>
+        </div>
+        {urgencyFlag && (
           <span
-            className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
-            style={{ backgroundColor: "#f5f5f5", color: "#999" }}
+            className="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded"
+            style={{
+              color: urgencyColor,
+              backgroundColor: urgencyColor + "18",
+              border: `1px solid ${urgencyColor}40`,
+            }}
           >
-            —
+            {urgencyFlag} urgency
           </span>
         )}
       </div>
     </div>
-  );
+  )
 }

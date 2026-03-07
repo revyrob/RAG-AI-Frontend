@@ -1,236 +1,119 @@
-import { useState, useEffect } from "react";
+import type { FootTrafficData } from "../hooks/useParcelScore"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface FootTrafficData {
-  upcomingEvents: string[];
-  windowLabel: string;
-  trafficSummary: string;
+interface Props {
+  data: FootTrafficData | null
 }
 
-// ─── Hardcoded seed data (swap with API call later) ───────────────────────────
-
-const DEFAULT_DATA: FootTrafficData = {
-  upcomingEvents: [],
-  windowLabel: "30-day window",
-  trafficSummary: "Low foot traffic zone — below city average",
-};
-
-
-
-// ─── Foot Traffic SVG icon ────────────────────────────────────────────────────
-
-function FootTrafficIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* head */}
-      <circle cx="12" cy="4" r="1.8" fill="currentColor" stroke="none" />
-      {/* body / stride */}
-      <path d="M10 8.5 C9 11 7.5 12.5 6 14" />
-      <path d="M14 8.5 C15 11 16.5 12.5 18 14" />
-      {/* legs */}
-      <path d="M10 13 L8 19" />
-      <path d="M14 13 L16 19" />
-      {/* connecting torso */}
-      <path d="M10 8.5 Q12 10.5 14 8.5" />
-    </svg>
-  );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
-export default function FootTraffic() {
-  const [data, setData] = useState<FootTrafficData>(DEFAULT_DATA);
-  const [visible, setVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  /**
-   * Replace body of this function with a real API call, e.g.:
-   *   const res = await fetch("/api/foot-traffic?parcelId=...");
-   *   const json = await res.json();
-   *   setData(json);
-   */
-  async function fetchData() {
-    setLoading(true);
-    setVisible(false);
-    await new Promise((r) => setTimeout(r, 650));
-
-    // Mock API response ↓
-    setData({
-      upcomingEvents: ["Farmers Market · Sat 8 AM", "Community Fair · Sun 10 AM"],
-      windowLabel: "30-day window",
-      trafficSummary: "Moderate foot traffic zone — near city average",
-    });
-
-    setLoading(false);
-    setVisible(true);
+export default function FootTraffic({ data }: Props) {
+  if (!data) {
+    return (
+      <div
+        className="px-4 text-xs text-gray-400 italic mb-4"
+        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        No foot traffic data.
+      </div>
+    )
   }
 
-  const hasEvents = data.upcomingEvents.length > 0;
+  const scoreColor =
+    data.score >= 70 ? "#1a7a45"
+    : data.score >= 40 ? "#92620a"
+    : "#b91c1c"
+
+  const maxVisits = data.top_locations[0]?.visits ?? 1
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Lora:wght@700&family=Outfit:wght@400;500&display=swap');
-
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in {
-          animation: fadeSlideUp 0.45s ease forwards;
-        }
-
-      `}</style>
-
-      <div className=" bg-white flex pl-6  py-12">
-        <div className="">
-
-       
-
-          {/* ── Section title ── */}
-          <div
-            className="flex items-center gap-2.5 mb-4"
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.4s ease, transform 0.4s ease",
-              transitionDelay: "80ms",
-              transform: visible ? "translateY(0)" : "translateY(8px)",
-            }}
+    <div className="px-4 mb-5">
+      {/* Score header */}
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className="text-xs font-bold uppercase tracking-widest text-gray-500"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          Foot Traffic
+        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className="text-lg font-black tabular-nums"
+            style={{ fontFamily: "'IBM Plex Mono', monospace", color: scoreColor }}
           >
-            <span style={{ color: "#000000" }}>
-              <FootTrafficIcon size={20} />
-            </span>
-            <h2
-              className="text-sm font-bold tracking-[0.18em] uppercase"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: "#000000",
-              }}
-            >
-              Foot Traffic · Live Status
-            </h2>
-          </div>
-
-          {/* ── Divider ── */}
-          <div
-            className="mb-4 h-px"
-            style={{ backgroundColor: "#CCC9C9", opacity: visible ? 1 : 0, transition: "opacity 0.4s ease", transitionDelay: "140ms" }}
-          />
-
-          {/* ── Upcoming events ── */}
-          <div
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.45s ease, transform 0.45s ease",
-              transitionDelay: "180ms",
-              transform: visible ? "translateY(0)" : "translateY(8px)",
-            }}
-          >
-            {hasEvents ? (
-              <ul className="mb-4 flex flex-col gap-1.5">
-                {data.upcomingEvents.map((ev, i) => (
-                  <li
-                    key={i}
-                   className="text-sm"
-                    style={{
-                      fontFamily: "'Outfit', sans-serif",
-                      color: "#000000",
-                      
-                    }}
-                  >
-                    {ev}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p
-               className="text-sm mb-4"
-                style={{
-                  fontFamily: "'Outfit', sans-serif",
-                  color: "#000000",
-                  
-                }}
-              >
-                No upcoming events detected
-              </p>
-            )}
-          </div>
-
-          {/* ── Traffic summary ── */}
-          <div
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.45s ease, transform 0.45s ease",
-              transitionDelay: "260ms",
-              transform: visible ? "translateY(0)" : "translateY(8px)",
-            }}
-          >
-            <p
-             className="text-sm"
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                color: "#000000",
-                
-              }}
-            >
-              <span style={{ color: "#737171" }}>{data.windowLabel} · </span>
-              {data.trafficSummary}
-            </p>
-          </div>
-
-          {/* ── Divider ── */}
-          <div
-            className="mt-8 mb-6 h-px"
-            style={{ backgroundColor: "#CCC9C9" }}
-          />
-
-          {/* ── Refresh button ── */}
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium transition-colors duration-200 disabled:opacity-50"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              backgroundColor: "#000000",
-              color: "#ffffff",
-            }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#C4911A")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#000000")
-            }
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Loading…
-              </>
-            ) : (
-              "Refresh via API"
-            )}
-          </button>
+            {data.score}
+          </span>
+          <span className="text-xs text-gray-400" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+            /100
+          </span>
         </div>
       </div>
-    </>
-  );
+
+      {/* Score bar */}
+      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-3">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${data.score}%`, backgroundColor: scoreColor }}
+        />
+      </div>
+
+      {/* Stats row */}
+      <div
+        className="grid grid-cols-2 gap-2 mb-3 text-xs"
+        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        <div className="bg-gray-50 rounded p-2">
+          <div className="text-gray-400">Locations</div>
+          <div className="font-bold text-black">{data.location_count}</div>
+        </div>
+        <div className="bg-gray-50 rounded p-2">
+          <div className="text-gray-400">Total Visits</div>
+          <div className="font-bold text-black">{data.total_visits.toLocaleString()}</div>
+        </div>
+      </div>
+
+      {/* Source badge */}
+      <div className="mb-2 flex items-center gap-1.5">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+            data.source === "arcgis"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+          }`}
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          {data.source === "arcgis" ? "✅ ArcGIS Live" : "⚠ Fallback Data"}
+        </span>
+      </div>
+
+      {/* Top locations */}
+      <div className="space-y-1.5">
+        {data.top_locations.slice(0, 4).map((loc, i) => (
+          <div key={i} className="group">
+            <div
+              className="flex items-center justify-between text-xs mb-0.5"
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            >
+              <span className="text-gray-700 truncate flex-1 mr-2">{loc.name}</span>
+              <span className="text-gray-400 flex-shrink-0">{loc.dist_miles.toFixed(2)}mi</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${(loc.visits / maxVisits) * 100}%`,
+                    backgroundColor: i === 0 ? "#C4911A" : "#d1d5db",
+                  }}
+                />
+              </div>
+              <span
+                className="text-xs tabular-nums text-gray-500 w-14 text-right"
+                style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+              >
+                {loc.visits.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
