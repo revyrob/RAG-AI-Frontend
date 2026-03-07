@@ -148,7 +148,7 @@ function LeafletMap({ lat, lon, zoom, height }: LeafletMapProps) {
       const map = L.map(containerRef.current, {
         center:             [lat, lon],
         zoom,
-        zoomControl:        false,
+        zoomControl:        true,
         attributionControl: false,
         dragging:           false,
         scrollWheelZoom:    false,

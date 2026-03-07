@@ -6,7 +6,7 @@ interface Props {
   selectedParcel: Parcel | null
   onSelectParcel: (parcel: Parcel) => void
 }
-
+ 
 export default function ParcelAnalyzeSection({ parcels, selectedParcel, onSelectParcel }: Props) {
   return (
     <div className='flex flex-col border-b border-[#C4911A] pb-4'>
