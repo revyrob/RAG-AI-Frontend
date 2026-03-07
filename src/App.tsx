@@ -30,7 +30,7 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
   const serverUrl = import.meta.env.VITE_SERVER_URL;
-  console.log(serverUrl)
+
   useEffect(() => {
     fetch(`${serverUrl}parcels`)
       .then(res => res.json())
@@ -41,11 +41,12 @@ function App() {
       .catch(() => {
         setError('Failed to connect to API')
         setLoading(false)
+        
       })
   }, [])
 
-  if (loading) return <div>Loading parcels...</div>
-  if (error) return <div>{error}</div>
+  if (loading) return <div className='text-black text-3xl '>Loading parcels...</div>
+  if (error) return <div className='text-black text-3xl '>{error}</div>
 
   return (
     <>
