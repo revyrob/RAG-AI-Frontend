@@ -11,6 +11,7 @@ interface Props {
   selectedParcel: Parcel | null
   onSelectParcel: (parcel: Parcel) => void
 }
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 export default function ChatArea({ selectedParcel}: Props) {
   return (
@@ -20,7 +21,7 @@ export default function ChatArea({ selectedParcel}: Props) {
         <Chat
           address={selectedParcel?.address}
           onSendMessage={async (message: string, history: ChatMessage[]) => {
-            const res = await fetch("http://127.0.0.1:8000/chat", {
+            const res = await fetch(`${serverUrl}chat`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

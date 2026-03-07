@@ -103,6 +103,7 @@ interface UseParcelScoreResult {
   error: string | null
   refetch: () => void
 }
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 export function useParcelScore(parcelId: ParcelId | null): UseParcelScoreResult {
   const [data, setData] = useState<ParcelScore | null>(null)
@@ -116,7 +117,7 @@ export function useParcelScore(parcelId: ParcelId | null): UseParcelScoreResult 
     setLoading(true)
     setError(null)
 
-    fetch(`http://localhost:8000/parcels/${parcelId}/score`)
+    fetch(`${serverUrl}parcels/${parcelId}/score`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
