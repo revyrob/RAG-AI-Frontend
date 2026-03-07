@@ -112,7 +112,7 @@ export default function BreakDown({ selectedParcel }: Props) {
               <Skeleton className="h-4 w-40" />
             </div>
           ) : (
-            <PropertyHeader parcel={data} />
+            <PropertyHeader parcel={data} selectedParcel={selectedParcel} />
           )}
 
           {/* Three-column layout */}

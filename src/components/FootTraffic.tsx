@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import type { FootTrafficData } from "../hooks/useParcelScore"
 
 interface Props {
@@ -5,11 +6,17 @@ interface Props {
 }
 
 export default function FootTraffic({ data }: Props) {
+  useEffect(() => {
+    const link = document.createElement("link")
+    link.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap"
+    link.rel = "stylesheet"
+    document.head.appendChild(link)
+  }, [])
   if (!data) {
     return (
       <div
         className="px-4 text-xs text-gray-400 italic mb-4"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        style={{ fontFamily: "'Outfit', sans-serif" }}
       >
         No foot traffic data.
       </div>
@@ -29,18 +36,18 @@ export default function FootTraffic({ data }: Props) {
       <div className="flex items-center justify-between mb-2">
         <span
           className="text-xs font-bold uppercase tracking-widest text-gray-500"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+          style={{ fontFamily: "'Outfit', sans-serif" }}
         >
           Foot Traffic
         </span>
         <div className="flex items-center gap-2">
           <span
             className="text-lg font-black tabular-nums"
-            style={{ fontFamily: "'IBM Plex Mono', monospace", color: scoreColor }}
+            style={{ fontFamily: "'Outfit', sans-serif", color: scoreColor }}
           >
             {data.score}
           </span>
-          <span className="text-xs text-gray-400" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+          <span className="text-xs text-gray-400" style={{ fontFamily: "'Outfit', sans-serif" }}>
             /100
           </span>
         </div>
@@ -57,7 +64,7 @@ export default function FootTraffic({ data }: Props) {
       {/* Stats row */}
       <div
         className="grid grid-cols-2 gap-2 mb-3 text-xs"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        style={{ fontFamily: "'Outfit', sans-serif" }}
       >
         <div className="bg-gray-50 rounded p-2">
           <div className="text-gray-400">Locations</div>
@@ -77,7 +84,7 @@ export default function FootTraffic({ data }: Props) {
               ? "bg-green-50 text-green-700 border border-green-200"
               : "bg-yellow-50 text-yellow-700 border border-yellow-200"
           }`}
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+          style={{ fontFamily: "'Outfit', sans-serif" }}
         >
           {data.source === "arcgis" ? "✅ ArcGIS Live" : "⚠ Fallback Data"}
         </span>
@@ -89,7 +96,7 @@ export default function FootTraffic({ data }: Props) {
           <div key={i} className="group">
             <div
               className="flex items-center justify-between text-xs mb-0.5"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+              style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               <span className="text-gray-700 truncate flex-1 mr-2">{loc.name}</span>
               <span className="text-gray-400 flex-shrink-0">{loc.dist_miles.toFixed(2)}mi</span>
@@ -106,7 +113,7 @@ export default function FootTraffic({ data }: Props) {
               </div>
               <span
                 className="text-xs tabular-nums text-gray-500 w-14 text-right"
-                style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                style={{ fontFamily: "'Outfit', sans-serif" }}
               >
                 {loc.visits.toLocaleString()}
               </span>
