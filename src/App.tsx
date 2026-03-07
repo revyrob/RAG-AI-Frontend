@@ -29,9 +29,10 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/parcels')
+    fetch(`${serverUrl}parcels`)
       .then(res => res.json())
       .then(data => {
         setParcels(data.parcels)
