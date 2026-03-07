@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import type { HealthFlags, Scores } from "../hooks/useParcelScore"
 
 interface Props {
@@ -5,133 +6,119 @@ interface Props {
   scores: Scores | null
 }
 
-function StatRow({
-  label,
-  value,
-  unit = "",
-  severity = "neutral",
-}: {
+const monoFont = "'IBM Plex Mono', monospace"
+const bodyFont = "'Outfit', sans-serif"
+
+interface HealthSignal {
   label: string
-  value: string | number
-  unit?: string
-  severity?: "critical" | "warning" | "good" | "neutral"
-}) {
-  const color =
-    severity === "critical" ? "#b91c1c"
-    : severity === "warning"  ? "#92620a"
-    : severity === "good"     ? "#1a7a45"
-    : "#374151"
-
-  const bg =
-    severity === "critical" ? "#fef2f2"
-    : severity === "warning"  ? "#fef9ec"
-    : severity === "good"     ? "#e6fdf2"
-    : "#f9fafb"
-
-  return (
-    <div
-      className="rounded p-2.5 mb-2"
-      style={{ backgroundColor: bg, fontFamily: "'IBM Plex Mono', monospace" }}
-    >
-      <div className="text-xs text-gray-500 mb-0.5">{label}</div>
-      <div className="text-sm font-bold" style={{ color }}>
-        {value}
-        {unit && <span className="text-xs font-normal ml-1 text-gray-500">{unit}</span>}
-      </div>
-    </div>
-  )
+  value: string
+  isHighlight?: boolean
 }
 
-function getSeverity(key: keyof HealthFlags, value: number): "critical" | "warning" | "good" | "neutral" {
-  switch (key) {
-    case "food_insecurity_pct":
-      return value >= 30 ? "critical" : value >= 15 ? "warning" : "good"
-    case "asthma_rate_multiplier":
-      return value >= 2 ? "critical" : value >= 1.5 ? "warning" : "good"
-    case "nearest_clinic_mi":
-      return value >= 2 ? "critical" : value >= 1 ? "warning" : "good"
-    case "nearest_grocery_mi":
-      return value >= 2 ? "critical" : value >= 1 ? "warning" : "good"
-    case "unemployment_rate":
-      return value >= 10 ? "critical" : value >= 6 ? "warning" : "good"
-    case "workforce_in_tech_pct":
-      return value < 5 ? "warning" : value >= 15 ? "good" : "neutral"
-    case "veterans_in_workforce":
-      return "neutral"
-    case "median_income":
-      return value < 25000 ? "critical" : value < 40000 ? "warning" : "good"
-    default:
-      return "neutral"
+function buildSignals(healthFlags: HealthFlags | null, scores: Scores | null): HealthSignal[] {
+  const signals: HealthSignal[] = []
+
+  if (scores?.flood_label) {
+    signals.push({ label: "Flood Rating", value: scores.flood_label })
   }
-}
+  if (scores?.destress_label) {
+    signals.push({ label: "Community Distress", value: scores.destress_label })
+  }
+  if (healthFlags?.food_insecurity_pct != null) {
+    signals.push({ label: "Food Insecurity", value: `${healthFlags.food_insecurity_pct}%`, isHighlight: true })
+  }
+  if (healthFlags?.asthma_rate_multiplier != null) {
+    signals.push({ label: "Asthma Rate", value: `${healthFlags.asthma_rate_multiplier}× avg` })
+  }
+  if (healthFlags?.nearest_grocery_mi != null) {
+    signals.push({ label: "Nearest grocery store", value: `${healthFlags.nearest_grocery_mi} mi`, isHighlight: true })
+  }
+  if (healthFlags?.nearest_clinic_mi != null) {
+    signals.push({ label: "Nearest clinic", value: `${healthFlags.nearest_clinic_mi} mi` })
+  }
+  if (healthFlags?.median_income != null) {
+    signals.push({ label: "Median household income", value: `$${healthFlags.median_income.toLocaleString()}`, isHighlight: true })
+  }
+  if (healthFlags?.unemployment_rate != null) {
+    signals.push({ label: "Unemployment", value: `${healthFlags.unemployment_rate}%` })
+  }
+  if (healthFlags?.workforce_in_tech_pct != null) {
+    signals.push({ label: "Tech workforce", value: `${healthFlags.workforce_in_tech_pct}%` })
+  }
+  if (healthFlags?.veterans_in_workforce != null) {
+    signals.push({ label: "Veterans in workforce", value: `${healthFlags.veterans_in_workforce}%` })
+  }
 
-const HEALTH_LABELS: Record<keyof HealthFlags, { label: string; unit: string }> = {
-  food_insecurity_pct:      { label: "Food Insecurity",      unit: "%" },
-  asthma_rate_multiplier:   { label: "Asthma Rate",          unit: "× avg" },
-  nearest_clinic_mi:        { label: "Nearest Clinic",       unit: "mi" },
-  nearest_grocery_mi:       { label: "Nearest Grocery",      unit: "mi" },
-  median_income:             { label: "Median Income",        unit: "$/yr" },
-  unemployment_rate:         { label: "Unemployment",         unit: "%" },
-  workforce_in_tech_pct:     { label: "Tech Workforce",       unit: "%" },
-  veterans_in_workforce:     { label: "Veterans",             unit: "%" },
+  return signals
 }
 
 export default function CommunityHealth({ healthFlags, scores }: Props) {
-  if (!healthFlags) {
-    return (
-      <div
-        className="px-4 text-xs text-gray-400 italic"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        No health data.
-      </div>
-    )
-  }
+  useEffect(() => {
+    const link = document.createElement("link")
+    link.href = "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap"
+    link.rel = "stylesheet"
+    document.head.appendChild(link)
+  }, [])
 
-  const entries = Object.entries(healthFlags) as [keyof HealthFlags, number][]
+  const signals = buildSignals(healthFlags, scores)
 
   return (
-    <div className="px-4 overflow-y-auto">
-      {entries.map(([key, value]) => {
-        const meta = HEALTH_LABELS[key]
-        if (!meta) return null
-        const sev = getSeverity(key, value)
-        const displayValue =
-          key === "median_income"
-            ? `$${Number(value).toLocaleString()}`
-            : value
-        return (
-          <StatRow
-            key={key}
-            label={meta.label}
-            value={displayValue}
-            unit={key === "median_income" ? "" : meta.unit}
-            severity={sev}
-          />
-        )
-      })}
+    <div className="flex flex-col pl-6 py-12">
+      <div style={{ width: "320px", fontFamily: bodyFont }}>
 
-      {/* 311 top complaints */}
-      {scores?.destress_top_complaints?.length > 0 && (
-        <div className="mt-3">
-          <div
-            className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        {/* Section title */}
+        <div
+          className="flex items-center gap-2.5 mb-4"
+          style={{ transition: "opacity 0.4s ease, transform 0.4s ease", transitionDelay: "80ms" }}
+        >
+          <h2
+            className="text-sm font-bold tracking-[0.18em] uppercase"
+            style={{ fontFamily: monoFont, color: "#000000" }}
           >
-            Top 311 Complaints
-          </div>
-          {scores.destress_top_complaints.map((c, i) => (
+            Community Health Signals
+          </h2>
+        </div>
+
+        {/* Divider */}
+        <div
+          className="mb-4 h-px"
+          style={{ backgroundColor: "#CCC9C9", transition: "opacity 0.4s ease", transitionDelay: "140ms" }}
+        />
+
+        {/* Signal rows */}
+        <div className="px-5 pb-4 flex flex-col gap-1">
+          {signals.map((signal, i) => (
             <div
               key={i}
-              className="flex items-center justify-between text-xs mb-1.5 px-2.5 py-1.5 rounded bg-gray-50 border border-gray-100"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+              className="flex items-center justify-between py-3 px-4 rounded-xl"
+              style={{ backgroundColor: "#f5f3fb" }}
             >
-              <span className="text-gray-600 truncate flex-1 mr-2">{c.type}</span>
-              <span className="font-bold text-black flex-shrink-0">{c.count}</span>
+              <span className="text-sm" style={{ color: "#3d3352", fontFamily: bodyFont }}>
+                {signal.label}
+              </span>
+              <span className="text-sm font-semibold" style={{ color: "#2d2440", fontFamily: monoFont }}>
+                {signal.value}
+              </span>
             </div>
           ))}
         </div>
-      )}
+
+        {/* Divider */}
+        <div className="mx-5 mb-4" style={{ borderTop: "1px solid #e8e4f3" }} />
+
+        {/* Quote */}
+        <div className="px-5 pb-6">
+          <p
+            className="text-sm leading-relaxed italic"
+            style={{ color: "#4a4060", fontFamily: bodyFont, fontSize: "0.82rem" }}
+          >
+            "These health indicators directly inform recommendation priority.
+            Where childhood health risk is elevated, RISE weights food access
+            and green infrastructure above commercial development."
+          </p>
+        </div>
+
+      </div>
     </div>
   )
 }
