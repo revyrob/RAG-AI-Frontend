@@ -3,7 +3,7 @@ import CommunityHealth from "../components/CommunityHealth"
 import FootTraffic from "../components/FootTraffic"
 import GrantsLiveStatus from "../components/Grants"
 import PropertyHeader from "../components/PropertyHeader"
-import { useParcelScore } from "../hooks/useParcelScore"
+import { useParcelScore } from "../hooks/Useparcelscore"
 import type { Parcel } from "../types"
 
 type ParcelId = "A" | "B" | "C"

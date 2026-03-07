@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import type { FootTrafficData } from "../hooks/useParcelScore"
+import type { FootTrafficData } from "../hooks/Useparcelscore"
 
 interface Props {
   data: FootTrafficData | null

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { GrantFlag, Scores } from "../hooks/useParcelScore"
+import type { GrantFlag, Scores } from "../hooks/Useparcelscore"
 
 interface Props {
   grants: GrantFlag[] | null

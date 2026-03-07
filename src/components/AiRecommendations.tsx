@@ -1,4 +1,4 @@
-import type { AiAnalysis, Scores } from "../hooks/useParcelScore"
+import type { AiAnalysis, Scores } from "../hooks/Useparcelscore"
 
 interface Props {
   data: AiAnalysis | null

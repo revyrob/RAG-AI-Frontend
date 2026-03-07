@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import type { HealthFlags, Scores } from "../hooks/useParcelScore"
+import type { HealthFlags, Scores } from "../hooks/Useparcelscore"
 
 interface Props {
   healthFlags: HealthFlags | null

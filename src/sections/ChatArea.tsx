@@ -1,13 +1,18 @@
 import type { Parcel } from '../types'
 import Chat from '../components/Chat'
 
+interface ChatMessage {
+  role: "user" | "rise"
+  text: string
+}
+
 interface Props {
   parcels: Parcel[]
   selectedParcel: Parcel | null
   onSelectParcel: (parcel: Parcel) => void
 }
 
-export default function ChatArea({ parcels, selectedParcel, onSelectParcel }: Props) {
+export default function ChatArea({ selectedParcel}: Props) {
   return (
     <div className='flex flex-col h-full'>
       <h1 className='p-4 pl-10 text-black font-section'>ASK RISE</h1>

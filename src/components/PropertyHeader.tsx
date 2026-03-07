@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import type { ParcelScore } from "../hooks/useParcelScore"
+import type { ParcelScore } from "../hooks/Useparcelscore"
 import type { Parcel } from "../types"
 
 interface Props {
