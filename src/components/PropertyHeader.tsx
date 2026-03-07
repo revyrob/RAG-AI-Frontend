@@ -1,17 +1,32 @@
-import { useEffect } from "react";
-import type { Parcel } from "../types";
+import { useEffect } from "react"
+import type { ParcelScore } from "../hooks/useParcelScore"
+import type { Parcel } from "../types"
 
-interface PropertyHeaderProps {
-  parcel?: Parcel | null;
+interface Props {
+  parcel: ParcelScore | null
+  selectedParcel: Parcel | null
 }
 
-export default function PropertyHeader({ parcel }: PropertyHeaderProps) {
+export default function PropertyHeader({ parcel, selectedParcel }: Props) {
   useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-  }, []);
+    const link = document.createElement("link")
+    link.href = "https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap"
+    link.rel = "stylesheet"
+    document.head.appendChild(link)
+  }, [])
+
+  // Strip "Parcel A — ", "Parcel B — " etc from the label so only the story name shows
+  const storyTitle = (parcel?.label ?? parcel?.story ?? selectedParcel?.story ?? "No parcel selected")
+    .replace(/^Parcel\s+[A-Z]\s*[—–-]\s*/i, "")
+
+  const address     = parcel?.address     ?? selectedParcel?.address     ?? "No parcel selected"
+  const acres       = parcel?.acres       ?? selectedParcel?.acres
+  const zoneContext = parcel?.scores?.zone_context ?? selectedParcel?.zone_context ?? "—"
+  const nearestAnchor = parcel?.nearest_anchor ?? selectedParcel?.nearest_anchor ?? "—"
+  const minDist     = parcel?.min_dist    ?? selectedParcel?.min_dist_miles
+  const openGrants  = (parcel?.grant_flags ?? []).filter(g => g.status === "open").length
+                      ?? selectedParcel?.open_grants
+                      ?? 0
 
   return (
     <div className="flex items-start justify-between px-6 py-3 bg-white border-b pb-8">
@@ -21,38 +36,38 @@ export default function PropertyHeader({ parcel }: PropertyHeaderProps) {
           className="font-bold text-gray-900 tracking-tight"
           style={{ fontFamily: "'Lora', serif", fontSize: "20px" }}
         >
-          {parcel?.address ?? "No parcel selected"}
+          {address}
         </h2>
         <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span>{parcel?.acres?.toFixed(1) ?? "—"} acres</span>
+          <span>{acres != null ? Number(acres).toFixed(1) : "—"} acres</span>
           <span className="text-gray-300">·</span>
-          <span>Zoned {parcel?.zone_context ?? "—"}</span>
+          <span>Zoned {zoneContext}</span>
           <span className="text-gray-300">·</span>
-          <span>{parcel?.nearest_anchor ?? "—"}</span>
+          <span>{nearestAnchor}</span>
         </div>
       </div>
 
       {/* Right: Flag badges */}
       <div className="flex items-center gap-2 mt-1">
-        {parcel ? (
+        {(parcel || selectedParcel) ? (
           <>
             <span
               className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
               style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
             >
-              {parcel.story}
+              {storyTitle}
             </span>
             <span
               className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
               style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
             >
-              {parcel.open_grants} grants open
+              {openGrants} grants open
             </span>
             <span
               className="px-4 py-1 rounded-full text-xs font-medium tracking-wide"
               style={{ backgroundColor: "#a8d8ea", color: "#1a4a5e" }}
             >
-              {parcel.min_dist_miles} mi to anchor
+              {minDist != null ? Number(minDist).toFixed(3) : "—"} mi to anchor
             </span>
           </>
         ) : (
@@ -65,5 +80,5 @@ export default function PropertyHeader({ parcel }: PropertyHeaderProps) {
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -47,7 +47,11 @@ async function geocodeAddress(address: string, city = ""): Promise<{ lat: number
       geocodeCache[query] = result;
       return result;
     }
-  } catch (_) {}
+  } catch (e) {
+    if(e instanceof TypeError) {
+      alert("Type Error for the map.")
+    }
+  }
 
   // Fallback: Montgomery, AL city centre
   return { lat: 32.3792, lon: -86.3077 };
@@ -99,6 +103,7 @@ function loadLeaflet(): Promise<void> {
       link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
       document.head.appendChild(link);
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).L) { resolve(); return; }
     const script    = document.createElement("script");
     script.src      = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
@@ -122,6 +127,7 @@ interface LeafletMapProps {
 
 function LeafletMap({ lat, lon, zoom, height }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef       = useRef<any>(null);
 
   useEffect(() => {
@@ -130,6 +136,7 @@ function LeafletMap({ lat, lon, zoom, height }: LeafletMapProps) {
 
     loadLeaflet().then(() => {
       if (destroyed || !containerRef.current) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L = (window as any).L;
 
       // Always destroy the previous instance before creating a new one
