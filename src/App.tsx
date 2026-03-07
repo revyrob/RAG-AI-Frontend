@@ -30,7 +30,7 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
   const serverUrl = import.meta.env.VITE_SERVER_URL;
-  console.log(serverUrl)
+
   useEffect(() => {
     fetch(`${serverUrl}parcels`)
       .then(res => res.json())
