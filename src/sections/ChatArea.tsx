@@ -1,10 +1,10 @@
 import type { Parcel } from '../types'
 import Chat from '../components/Chat'
 
-interface ChatMessage {
-  role: "user" | "rise"
-  text: string
-}
+// interface ChatMessage {
+//   role: "user" | "rise"
+//   text: string
+// }
 
 interface Props {
   parcels: Parcel[]
