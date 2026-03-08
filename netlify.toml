@@ -1,5 +1,26 @@
+[build]
+base = ""
+publish = "build/"
+command = "npm run build"
+
 [[redirects]]
-  from = "/api/*"
-  to = "http://ec2-98-93-238-165.compute-1.amazonaws.com:8000/:splat"
-  status = 200
-  force = true
+from = "/*"
+to = "index.html"
+status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "no-referrer"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+  cache-control = '''
+  max-age=604800,
+  no-cache,
+  no-store,
+  must-revalidate'''
