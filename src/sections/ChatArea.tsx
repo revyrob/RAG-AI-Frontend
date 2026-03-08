@@ -19,25 +19,20 @@ export default function ChatArea({ selectedParcel}: Props) {
       <h1 className='p-4 pl-10 text-black font-section'>ASK RISE</h1>
       <div className='flex-1 px-4 pb-4 min-h-0'>
         <Chat
-          address={selectedParcel?.address}
-          onSendMessage={async (message: string, history: ChatMessage[]) => {
-            const res = await fetch(`${serverUrl}chat`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message,
-                history: history.map((m) => ({
-                  role: m.role === "rise" ? "assistant" : "user",
-                  content: m.text,
-                })),
-                parcel_address: selectedParcel?.address ?? "",
-                parcel_id: selectedParcel?.id ?? "",
-              }),
-            })
-            const data = await res.json()
-            return data.reply
-          }}
-        />
+  address={selectedParcel?.address}
+  onSendMessage={async (message: string) => {
+    const res = await fetch(`${serverUrl}chat/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: message,
+        parcel_filter: selectedParcel?.id ?? null,
+      }),
+    })
+    const data = await res.json()
+    return data.answer
+  }}
+/>
       </div>
     </div>
   )
