@@ -228,7 +228,6 @@ function MapSection({ address, city, height, zoom }: MapSectionProps) {
       style={{
         position:     "relative",
         width:        "100%",
-        height,
         flexShrink:   0,
         borderRadius: "0 0 12px 12px",
         overflow:     "hidden",
@@ -296,7 +295,7 @@ export default function ParcelCard({
           ? "0 0 0 2px rgba(232,168,48,0.25), 0 4px 9px rgba(0,0,0,0.45)"
           : "",
         transition:   "all 0.22s ease",
-        width:        520,
+        width:        460,
         transform:    isHighlighted ? "translateY(-4px)" : "translateY(0)",
       }}
     >
