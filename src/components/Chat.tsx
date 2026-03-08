@@ -320,7 +320,7 @@ function InjectStyles() {
 // ── AiRecommendations (main export) ──────────────────────────────────────────
 
 export default function Chat({
-  address = "101 Catoma St, Montgomery AL 36104",
+  address = "no address",
   onSendMessage,
 }: ChatProps) {
   const getOpeningMessage = (addr: string): ChatMessage => ({
