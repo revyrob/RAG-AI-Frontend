@@ -64,7 +64,7 @@ export default function CommunityHealth({ healthFlags, scores }: Props) {
 
   return (
     <div className="flex flex-col pl-6 py-12">
-      <div style={{ width: "320px", fontFamily: bodyFont }}>
+      <div style={{ fontFamily: bodyFont }}>
 
         {/* Section title */}
         <div
