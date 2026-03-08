@@ -33,13 +33,16 @@ export default function FootTraffic({ data }: Props) {
   return (
     <div className="px-4 mb-5">
       {/* Score header */}
-      <div className="flex items-center justify-between mb-2">
-        <span
-          className="text-xs font-bold uppercase tracking-widest text-gray-500"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
-        >
-          Foot Traffic
-        </span>
+          <div className="flex items-center gap-2.5 mb-4" style={{ transition: "opacity 0.4s ease", transitionDelay: "80ms" }}>
+       
+          {/* Section title */}
+            <h2
+              className="text-sm font-bold tracking-[0.18em] uppercase"
+              style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#000000" }}
+            >
+               Foot Traffic
+            </h2>
+          
         <div className="flex items-center gap-2">
           <span
             className="text-lg font-black tabular-nums"

@@ -128,7 +128,7 @@ export default function GrantsLiveStatus({ grants }: Props) {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Lora:wght@700&family=Outfit:wght@400;500&display=swap');`}</style>
 
-      <div className="bg-white pl-6 py-12">
+      <div className="bg-white pl-6 py-12 overflow-y-auto">
         <div>
           {/* Section title */}
           <div className="flex items-center gap-2.5 mb-4" style={{ transition: "opacity 0.4s ease", transitionDelay: "80ms" }}>
@@ -136,7 +136,7 @@ export default function GrantsLiveStatus({ grants }: Props) {
               className="text-sm font-bold tracking-[0.18em] uppercase"
               style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#000000" }}
             >
-              Grants.gov — Live Status
+              Live Grants.gov + Bright Data
             </h2>
           </div>
 
@@ -144,7 +144,7 @@ export default function GrantsLiveStatus({ grants }: Props) {
           <div className="mb-4 h-px" style={{ backgroundColor: "#CCC9C9", transition: "opacity 0.4s ease", transitionDelay: "140ms" }} />
 
           {/* Grant list */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 ">
             {rows.map((grant, i) => (
               <GrantRowItem key={grant.id} grant={grant} index={i} visible={visible} />
             ))}
