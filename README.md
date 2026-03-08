@@ -58,7 +58,7 @@ Coherent Fallback Required
 
 3. Run the frontend with the following command in the folder:
 
-    npm start
+    npm run dev
 
 ## .env File Needed
 Add a .env file to your root folder and add the following line if you are running the backend locally
