@@ -11,6 +11,7 @@ export interface ChatMessage {
 interface ChatProps {
   /** Parcel address fed into the bot's opening message */
   address?: string;
+  initialMessage: string;
   /** Called when user submits a message — hook up to your API */
   onSendMessage?: (message: string, history: ChatMessage[]) => Promise<string>;
 }
@@ -322,20 +323,19 @@ export default function Chat({
   address = "101 Catoma St, Montgomery AL 36104",
   onSendMessage,
 }: ChatProps) {
-  const openingMessage: ChatMessage = {
-    id:   "opening",
-    role: "rise",
-    text: `I'm analyzing ${address}. Ask me anything — about the recommendations, the data signals, the grant urgency, or what this neighborhood really needs.`,
-  };
+  const getOpeningMessage = (addr: string): ChatMessage => ({
+  id:   "opening",
+  role: "rise",
+  text: `I'm analyzing ${addr}. Ask me anything — about the recommendations, the data signals, the grant urgency, or what this neighborhood really needs.`,
+});
 
-  const [messages, setMessages]   = useState<ChatMessage[]>([openingMessage]);
+ const [messages, setMessages] = useState<ChatMessage[]>([getOpeningMessage(address)]);
   const [typing,   setTyping]     = useState(false);
   const bottomRef                 = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  setMessages([getOpeningMessage(address)]);
+}, [address]);
 
   async function handleSend(text: string) {
     const userMsg: ChatMessage = {

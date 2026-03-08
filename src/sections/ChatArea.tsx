@@ -14,12 +14,18 @@ interface Props {
   const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 export default function ChatArea({ selectedParcel}: Props) {
+  console.log(selectedParcel)
   return (
     <div className='flex flex-col h-full'>
       <h1 className='p-4 pl-10 text-black font-section'>ASK RISE</h1>
       <div className='flex-1 px-4 pb-4 min-h-0'>
         <Chat
   address={selectedParcel?.address}
+   initialMessage={
+    selectedParcel
+      ? `I'm analyzing ${selectedParcel.address}. Ask me anything — about the recommendations, the data signals, the grant urgency, or what this neighborhood really needs.`
+      : `No parcel selected. Please select a parcel to get started.`
+  }
   onSendMessage={async (message: string) => {
     const res = await fetch(`${serverUrl}chat/ask`, {
       method: "POST",
