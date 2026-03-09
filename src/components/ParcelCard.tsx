@@ -157,12 +157,10 @@ function LeafletMap({ lat, lon, zoom, height }: LeafletMapProps) {
         keyboard:           false,
         tap:                false,
       });
-
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        { maxZoom: 19 }
-      ).addTo(map);
-
+L.tileLayer(
+  "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
+  { maxZoom: 20 }
+).addTo(map);
       // Amber teardrop pin
       const icon = L.divIcon({
         className: "",
