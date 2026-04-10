@@ -1,71 +1,50 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import Header from './components/Header'
-import BreakDown from './sections/BreakDown'
-import ParcelAnalyzeSection from './sections/ParcelAnalyzeSection'
-import ChatArea from './sections/ChatArea'
-
-interface Coords {
-  lat: number
-  lon: number
-}
-
-export interface Parcel {
-  id: string
-  label: string
-  story: string
-  address: string
-  parcel_id: string
-  acres: number
-  zone_context: string
-  nearest_anchor: string
-  min_dist_miles: number
-  open_grants: number
-  coords: Coords
-}
+import CityMap from './pages/CityMap/CityMap'
+import ParcelScore from './pages/ParcelScore/ParcelScore'
+import Signals311 from './pages/311Signals/311Signals'
+import ConfigPage from './pages/ConfigPage/ConfigPage'
+import LoginPage from './pages/Login/LoginPage'
 
 function App() {
-  const [parcels, setParcels] = useState<Parcel[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
-  const serverUrl = import.meta.env.VITE_SERVER_URL;
-
-  useEffect(() => {
-    fetch(`${serverUrl}parcels`)
-      .then(res => res.json())
-      .then(data => {
-        setParcels(data.parcels)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to connect to API')
-        setLoading(false)
-        
-      })
-  }, [])
-
-  if (loading) return <div className='text-black text-3xl '>Loading parcels...</div>
-  if (error) return <div className='text-black text-3xl '>{error}</div>
+  // TODO: replace with Supabase session check
+  const [isLoggedIn, setIsLoggedIn] = useState(true)
 
   return (
-    <>
-      <Header />
-      <ParcelAnalyzeSection
-        parcels={parcels}
-        selectedParcel={selectedParcel}
-        onSelectParcel={setSelectedParcel}
+    <Routes>
+      {/* Public */}
+      <Route
+        path="/login"
+        element={
+          isLoggedIn
+            ? <Navigate to="/city-map" replace />
+            : <LoginPage onLogin={() => setIsLoggedIn(true)} />
+        }
       />
-      <BreakDown
-        parcels={parcels}
-        selectedParcel={selectedParcel}
+
+      {/* Protected — redirect to /login if not authenticated */}
+      <Route
+        path="/*"
+        element={
+          isLoggedIn ? (
+            <>
+              <Header onLogout={() => setIsLoggedIn(false)} />
+              <Routes>
+                <Route path="/" element={<Navigate to="/city-map" replace />} />
+                <Route path="/city-map" element={<CityMap />} />
+                <Route path="/parcel-score" element={<ParcelScore />} />
+                <Route path="/311-signals" element={<Signals311 />} />
+                <Route path="/config" element={<ConfigPage />} />
+              </Routes>
+            </>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
       />
-      <ChatArea
-        parcels={parcels}
-        selectedParcel={selectedParcel}
-        onSelectParcel={setSelectedParcel}
-      />
-    </>
+    </Routes>
   )
 }
 

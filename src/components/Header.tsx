@@ -1,124 +1,108 @@
-import { useEffect, useState } from "react";
+import { useNavigate, NavLink } from "react-router-dom";
 
 interface HeaderProps {
   className?: string;
+  onLogout?: () => void;
 }
 
-export default function Header({ className = "" }: HeaderProps) {
-  const [visible, setVisible] = useState(false);
+const navItems = [
+  { to: "/city-map",     label: "CITY MAP" },
+  { to: "/parcel-score", label: "PARCEL SCORE" },
+  { to: "/311-signals",  label: "311 SIGNALS" },
+  { to: "/config",       label: "CONFIG" },
+];
 
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 50);
-    return () => clearTimeout(t);
-  }, []);
+export default function Header({ className = "", onLogout }: HeaderProps) {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    // TODO: replace with supabase.auth.signOut()
+    onLogout?.();
+    navigate("/login");
+  }
 
   return (
     <header
-      className={`relative w-full overflow-hidden ${className}`}
-      style={{ backgroundColor: "#0e3a47" }}
+      className={className}
+      style={{
+        width: "100%",
+        backgroundColor: "#f8f4eb",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 2rem",
+        height: "52px",
+        boxSizing: "border-box",
+      }}
     >
-      {/* Subtle background texture overlay */}
+      {/* Logo */}
       <div
-        className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(ellipse 70% 80% at 0% 50%, rgba(255,255,255,0.03) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 100% 0%, rgba(200,165,30,0.06) 0%, transparent 55%)",
-        }}
-      />
-
-      <div
-        className="relative z-10 pt-8 pb-8"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(6px)",
-          transition: "opacity 0.5s ease, transform 0.5s ease",
-          paddingTop: "1rem",
-          paddingBottom: "2rem"
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: "1.3rem",
+          fontWeight: 700,
+          color: "#1a1a1a",
+          letterSpacing: "0.05em",
+          flexShrink: 0,
+          userSelect: "none",
         }}
       >
-        {/* Logo block */}
-        <div className="mb-1">
-          <div
-            className="font-bold text-white leading-tight tracking-wide"
-            style={{
-              fontFamily: "'Lora', sans-serif",
-              fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
-              fontWeight: 400,
-              color: "#ffffff",
-              textAlign:"left",
-              marginLeft:"2rem",
-              marginBottom:".25rem"
-            }}
-          >
-            Montgomery
-          </div>
-
-          <div
-            style={{
-              fontFamily: "'Lora',  sans-serif",
-              fontSize: "clamp(1.4rem, 2.5vw, 1.75rem)",
-              color: "#c9a227",
-              letterSpacing: "0.08em",
-              lineHeight: 1,
-              marginTop: "-2px",
-              textAlign:"left",
-              marginLeft:"2rem",
-               marginBottom:".75rem"
-            }}
-          >
-            RISE
-          </div>
-        </div>
-
-        {/* Tagline */}
-        <div
-          className="mb-5"
-          style={{
-            fontFamily: "'Lora', Georgia, serif",
-            fontStyle: "italic",
-            fontSize: "clamp(0.7rem, 1.2vw, 0.82rem)",
-            color: "#FFF8F8",
-            letterSpacing: "0.03em",
-              textAlign:"left",
-              marginLeft:"2rem",
-              marginBottom:".75rem"
-          }}
-        >
-          Revitalization Intelligence &amp; Smart Empowerment
-        </div>
-
-        {/* Divider */}
-        <div
-          className="mb-5 w-full"
-          style={{
-            height: "1px",
-            background:
-              "linear-gradient(to right, rgba(201,162,39,0.4), rgba(255,255,255,0.08) 60%, transparent)",
-            marginLeft:"2rem",
-            marginBottom:".75rem"
-          }}
-        />
-
-        {/* Description */}
-        <p
-          style={{
-            fontFamily: "'Lora', Georgia, serif",
-            fontStyle: "italic",
-            fontSize: "clamp(0.72rem, 1.1vw, 0.8rem)",
-            color: "#FFF8F8",
-            lineHeight: 1.7,
-            letterSpacing: "0.01em",
-              textAlign:"left",
-              marginLeft:"2rem",
-             
-          }}
-        >
-          RISE uses AI to tell Montgomery&apos;s city planners what abandoned land should become —
-          scored by economic need, civil rights heritage, live grant funding, real-time events,
-          and community health data. Every other tool tells you what a parcel{" "}
-          <em>was worth</em>. RISE tells you what it&apos;s worth <em>right now</em>.
-        </p>
+        RI<span style={{ fontStyle: "italic", color: "#c9a227" }}>S</span>E
       </div>
+
+      {/* Nav — centered */}
+      <nav
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "0.25rem",
+        }}
+      >
+        {navItems.map(({ to, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            style={({ isActive }) => ({
+              fontFamily: "'Lora', Georgia, serif",
+              fontSize: "0.72rem",
+              letterSpacing: "0.1em",
+              padding: "0.3rem 1rem",
+              borderRadius: "5px",
+              textDecoration: "none",
+              color: isActive ? "#1a1a1a" : "#666",
+              border: isActive ? "1.5px solid #c9a227" : "1.5px solid transparent",
+              fontWeight: isActive ? 600 : 400,
+              transition: "color 0.15s, border-color 0.15s",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Sign Out */}
+      <button
+        onClick={handleLogout}
+        style={{
+          flexShrink: 0,
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: "0.72rem",
+          letterSpacing: "0.08em",
+          color: "#999",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "0.3rem 0",
+          transition: "color 0.15s",
+        }}
+        onMouseEnter={e => ((e.target as HTMLButtonElement).style.color = "#c9a227")}
+        onMouseLeave={e => ((e.target as HTMLButtonElement).style.color = "#999")}
+      >
+        SIGN OUT
+      </button>
     </header>
   );
 }
