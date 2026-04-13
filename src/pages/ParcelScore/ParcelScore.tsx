@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -126,12 +126,7 @@ function parcelLabel(p: RawParcel) {
   return [p.STREET_NUM, p.STREET_NAM].filter(Boolean).join(" ").trim() || p.LOCATION || p.TAX_MAP || "Vacant Lot";
 }
 
-const QUICK_TRIES = [
-  "Commerce St, Montgomery",
-  "Coosa St, Montgomery",
-  "Kimball St, Montgomery",
-  "Bibb St, Montgomery",
-];
+
 
 export default function ParcelScore() {
   const [parcels, setParcels] = useState<RawParcel[]>([]);
@@ -142,15 +137,27 @@ export default function ParcelScore() {
   const [mapCoords, setMapCoords] = useState<{ lat: number; lon: number } | null>(null);
   const serverUrl = import.meta.env.VITE_SERVER_URL;
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${serverUrl}map/vacant-parcels`)
       .then(r => r.json())
       .then((data: unknown) => {
-        const list = Array.isArray(data) ? data as RawParcel[] : [];
-        const filtered = list.filter(p => p.DISPLAY !== "NO");
+        const raw: RawParcel[] = Array.isArray(data)
+          ? (data as RawParcel[])
+          : ((data as { parcels?: RawParcel[] }).parcels ?? []);
+        const filtered = raw.filter(p => p.DISPLAY !== "NO");
         setParcels(filtered);
         setLoading(false);
+
+        // If user already typed something before parcels loaded, re-run suggestions now
+        setQuery(prev => {
+          if (prev.trim()) {
+            const q = prev.split(",")[0].toLowerCase().trim();
+            setSuggestions(filtered.filter(p => parcelLabel(p).toLowerCase().includes(q)).slice(0, 6));
+          }
+          return prev;
+        });
 
         const fid     = searchParams.get("fid");
         const address = searchParams.get("address");
@@ -181,7 +188,8 @@ export default function ParcelScore() {
     setQuery(value);
     setSelected(null);
     if (!value.trim()) { setSuggestions([]); return; }
-    const q = value.toLowerCase();
+    // Strip city/state suffix before matching (e.g. "123 Commerce St, Montgomery, AL" → "123 Commerce St")
+    const q = value.split(",")[0].toLowerCase().trim();
     setSuggestions(
       parcels.filter(p => parcelLabel(p).toLowerCase().includes(q)).slice(0, 6)
     );
@@ -303,36 +311,13 @@ export default function ParcelScore() {
           )}
         </div>
 
-        {/* Quick tries */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.78rem", color: "#999" }}>Try:</span>
-          {QUICK_TRIES.map(t => (
-            <button
-              key={t}
-              onClick={() => handleQueryChange(t)}
-              style={{
-                fontSize: "0.78rem",
-                color: "#555",
-                background: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: "20px",
-                padding: "0.25rem 0.75rem",
-                cursor: "pointer",
-                fontFamily: "'Lora', Georgia, serif",
-              }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
         {/* Main content grid */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "2rem" }}>
 
           {/* Left — map */}
           <div style={{ borderRadius: "8px", minHeight: "360px", overflow: "hidden", position: "relative" }}>
             {mapCoords ? (
-              <ParcelMap lat={mapCoords.lat} lon={mapCoords.lon} />
+              <ParcelMap lat={mapCoords.lat} lon={mapCoords.lon} rings={selected?.rings} />
             ) : (
               // Placeholder when no parcel selected
               <div style={{
@@ -456,6 +441,28 @@ export default function ParcelScore() {
                 </div>
               )}
             </div>
+
+            {/* 311 Signals link */}
+            {selected && (
+              <button
+                onClick={() => navigate(`/311-signals?parcel_num=${encodeURIComponent(selected.PARCEL_NUM)}&address=${encodeURIComponent(parcelLabel(selected))}&lat=${selected.lat}&lon=${selected.lon}`)}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#fef2f2",
+                  color: "#dc2626",
+                  border: "1px solid #fecaca",
+                  borderRadius: "6px",
+                  padding: "0.55rem",
+                  fontFamily: "'Lora', Georgia, serif",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                View 311 distress signals →
+              </button>
+            )}
 
           </div>
         </div>

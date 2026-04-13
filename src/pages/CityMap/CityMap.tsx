@@ -31,6 +31,7 @@ interface RawParcel {
 
 interface PopupInfo {
   fid: number;
+  parcelNum: string;
   address: string;
   district: number | string;
   acres: string;
@@ -148,11 +149,12 @@ export default function CityMap() {
               geometry: new Point({ latitude: coords.lat, longitude: coords.lon }),
               symbol: lotSymbol,
               attributes: {
-                FID:       p.FID,
-                lat:       coords.lat,
-                lon:       coords.lon,
-                District:  p.District,
-                CALC_ACRE: p.CALC_ACRE,
+                FID:        p.FID,
+                PARCEL_NUM: p.PARCEL_NUM,
+                lat:        coords.lat,
+                lon:        coords.lon,
+                District:   p.District,
+                CALC_ACRE:  p.CALC_ACRE,
               },
             });
           });
@@ -182,12 +184,13 @@ export default function CityMap() {
             if (result?.type === "graphic") {
               const attrs = result.graphic.attributes;
               const base = {
-                fid:      attrs.FID,
-                address:  "Looking up address…",
-                district: attrs.District,
-                acres:    attrs.CALC_ACRE != null ? Number(attrs.CALC_ACRE).toFixed(2) : "—",
-                lat:      attrs.lat,
-                lon:      attrs.lon,
+                fid:       attrs.FID,
+                parcelNum: attrs.PARCEL_NUM ?? "",
+                address:   "Looking up address…",
+                district:  attrs.District,
+                acres:     attrs.CALC_ACRE != null ? Number(attrs.CALC_ACRE).toFixed(2) : "—",
+                lat:       attrs.lat,
+                lon:       attrs.lon,
                 x: event.x,
                 y: event.y,
               };
@@ -330,7 +333,7 @@ export default function CityMap() {
 
             {/* Score button */}
             <button
-              onClick={() => navigate(`/parcel-score?fid=${popup.fid}&address=${encodeURIComponent(popup.address)}&lat=${popup.lat}&lon=${popup.lon}`)}
+              onClick={() => navigate(`/parcel-score?fid=${popup.fid}&parcel_num=${encodeURIComponent(popup.parcelNum)}&address=${encodeURIComponent(popup.address)}&lat=${popup.lat}&lon=${popup.lon}`)}
               style={{
                 width: "100%",
                 backgroundColor: "#0e3a47",
