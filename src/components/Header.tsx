@@ -50,7 +50,7 @@ export default function Header({ className = "" }: HeaderProps) {
               marginBottom:".25rem"
             }}
           >
-            Montgomery
+           
           </div>
 
           <div
