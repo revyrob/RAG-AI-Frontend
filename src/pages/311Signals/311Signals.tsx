@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 
 const RADIUS_MILES = 0.3;
 
@@ -102,18 +101,21 @@ export default function Signals311() {
   const [loading, setLoading] = useState(false);
   const [totalFetched, setTotalFetched] = useState(0);
   const [activeFilter, setFilter] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
   const serverUrl = import.meta.env.VITE_SERVER_URL;
 
-  const latParam = searchParams.get("lat");
-  const lonParam = searchParams.get("lon");
-  const parcelNum = searchParams.get("parcel_num");
-  const parcelAddr = searchParams.get("address")
-    ? decodeURIComponent(searchParams.get("address")!)
-    : parcelNum ?? "Unknown parcel";
+  // Read selected parcel from localStorage (written by CityMap → ParcelScore)
+  const stored = (() => {
+    try {
+      const raw = localStorage.getItem("selectedParcel");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
 
-  const centerLat = latParam ? Number(latParam) : null;
-  const centerLon = lonParam ? Number(lonParam) : null;
+  const centerLat: number | null = stored?.lat ?? null;
+  const centerLon: number | null = stored?.lon ?? null;
+  const parcelAddr: string = stored?.address ?? "Unknown parcel";
 
   useEffect(() => {
     if (centerLat === null || centerLon === null) return;
@@ -137,6 +139,7 @@ export default function Signals311() {
           allViolations = (data.violations ?? []) as Violation[];
           _violationsCache = allViolations;
           _violationsCacheTime = now;
+          console.log("[311Signals] all violations (fresh fetch):", allViolations);
         }
 
         setTotalFetched(allViolations.length);
@@ -157,6 +160,10 @@ export default function Signals311() {
             new Date(b.case_date).getTime() - new Date(a.case_date).getTime()
         );
 
+        console.log(
+          `[311Signals] violations within ${RADIUS_MILES}mi of (${centerLat}, ${centerLon}):`,
+          nearby,
+        );
         setViolations(nearby);
       } catch (err) {
         console.error("Failed to load violations:", err);

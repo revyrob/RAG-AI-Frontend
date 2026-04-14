@@ -1,8 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// ── Shared localStorage type ─────────────────────────────────────────────────
+export interface StoredParcel {
+  fid: number;
+  parcelNum: string;
+  address: string;
+  lat: number;
+  lon: number;
+  rings: number[][][] | null;
+}
+
+function readStoredParcel(): StoredParcel | null {
+  try {
+    const raw = localStorage.getItem("selectedParcel");
+    return raw ? (JSON.parse(raw) as StoredParcel) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Raw parcel type (for search) ─────────────────────────────────────────────
 interface RawParcel {
   FID: number;
   TAX_MAP: string;
@@ -18,64 +38,57 @@ interface RawParcel {
   SQ_FT: number;
   lat: number;
   lon: number;
-  rings?: number[][][]; // ArcGIS polygon rings: [[[lon, lat], ...]]
+  rings?: number[][][];
 }
 
 // ── Leaflet map component ────────────────────────────────────────────────────
-function ParcelMap({ lat, lon, rings }: { lat: number; lon: number; rings?: number[][][] }) {
-  const mapDivRef  = useRef<HTMLDivElement>(null);
-  const mapRef     = useRef<L.Map | null>(null);
-  const layerRef   = useRef<L.Layer | null>(null); // polygon or fallback marker
+function ParcelMap({
+  lat,
+  lon,
+  address,
+}: {
+  lat: number;
+  lon: number;
+  address: string;
+}) {
+  const mapDivRef = useRef<HTMLDivElement>(null);
 
-  // Create map once on mount
   useEffect(() => {
     if (!mapDivRef.current) return;
-    const map = L.map(mapDivRef.current, { zoomControl: true, attributionControl: false })
-      .setView([lat, lon], 17);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      subdomains: ["a", "b", "c", "d"],
-      maxZoom: 19,
-    }).addTo(map);
-    mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; layerRef.current = null; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // Re-draw whenever parcel changes
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+    const map = L.map(mapDivRef.current, { zoomControl: true }).setView(
+      [lat, lon],
+      17,
+    );
 
-    // Remove previous layer
-    if (layerRef.current) { map.removeLayer(layerRef.current); layerRef.current = null; }
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+      {
+        attribution: "© OpenStreetMap contributors © CARTO",
+        subdomains: ["a", "b", "c", "d"],
+      },
+    ).addTo(map);
 
-    if (rings && rings.length > 0) {
-      // ArcGIS rings are [lon, lat] — Leaflet needs [lat, lon]
-      const latlngs = rings[0].map(([lng, lt]) => [lt, lng] as L.LatLngExpression);
-      const polygon = L.polygon(latlngs as L.LatLngExpression[], {
-        color: "#c9a227",
-        weight: 2.5,
-        fillColor: "#c9a227",
-        fillOpacity: 0.2,
-      }).addTo(map);
-      map.fitBounds(polygon.getBounds(), { padding: [30, 30], animate: false });
-      layerRef.current = polygon;
-    } else {
-      // Fallback: circle marker if no rings
-      const marker = L.circleMarker([lat, lon], {
-        radius: 10, color: "#c9a227", weight: 2.5,
-        fillColor: "#c9a227", fillOpacity: 0.25,
-      }).addTo(map);
-      map.setView([lat, lon], 17, { animate: false });
-      layerRef.current = marker;
-    }
-  }, [lat, lon, rings]);
+    L.circleMarker([lat, lon], {
+      radius: 10,
+      color: "#c9a227",
+      weight: 2.5,
+      fillColor: "#c9a227",
+      fillOpacity: 0.7,
+    })
+      .addTo(map)
+      .bindPopup(address, { closeButton: false })
+      .openPopup();
+
+    return () => {
+      map.remove();
+    };
+  }, [lat, lon, address]);
 
   return <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />;
 }
 
-// ── Seeded fake data ─────────────────────────────────────────────────────────
-// Seeded fake data so the same parcel always gets the same numbers
+// ── Seeded fake analytics ────────────────────────────────────────────────────
 function seedRandom(seed: number) {
   let s = seed;
   return () => {
@@ -103,9 +116,9 @@ const STREET_NAMES = [
 function getComparables(fid: number) {
   const rand = seedRandom(fid * 13);
   return Array.from({ length: 3 }, () => {
-    const num = 100 + Math.floor(rand() * 900);
+    const num    = 100 + Math.floor(rand() * 900);
     const street = STREET_NAMES[Math.floor(rand() * STREET_NAMES.length)];
-    const sqft = 820 + Math.floor(rand() * 400);
+    const sqft   = 820 + Math.floor(rand() * 400);
     return { address: `${num} ${street}`, value: `$${sqft.toLocaleString()}/sqft` };
   });
 }
@@ -123,222 +136,197 @@ function getAiRecommendation(fid: number) {
 }
 
 function parcelLabel(p: RawParcel) {
-  return [p.STREET_NUM, p.STREET_NAM].filter(Boolean).join(" ").trim() || p.LOCATION || p.TAX_MAP || "Vacant Lot";
+  return (
+    [p.STREET_NUM, p.STREET_NAM].filter(Boolean).join(" ").trim() ||
+    p.LOCATION ||
+    p.TAX_MAP ||
+    "Vacant Lot"
+  );
 }
 
-
-
+// ── Main component ───────────────────────────────────────────────────────────
 export default function ParcelScore() {
-  const [parcels, setParcels] = useState<RawParcel[]>([]);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<RawParcel | null>(null);
-  const [suggestions, setSuggestions] = useState<RawParcel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [mapCoords, setMapCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const serverUrl = import.meta.env.VITE_SERVER_URL;
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  // Source of truth: whatever was selected on CityMap (persisted in localStorage)
+  const [storedParcel, setStoredParcel] = useState<StoredParcel | null>(readStoredParcel);
 
+  // Parcel list — fetched only for the search-another-parcel feature
+  const [parcels, setParcels]         = useState<RawParcel[]>([]);
+  const [query, setQuery]             = useState("");
+  const [suggestions, setSuggestions] = useState<RawParcel[]>([]);
+  const [loading, setLoading]         = useState(true);
+
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
+  const navigate  = useNavigate();
+
+  // Fetch parcel list for search
   useEffect(() => {
     fetch(`${serverUrl}map/vacant-parcels`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((data: unknown) => {
         const raw: RawParcel[] = Array.isArray(data)
           ? (data as RawParcel[])
           : ((data as { parcels?: RawParcel[] }).parcels ?? []);
-        const filtered = raw.filter(p => p.DISPLAY !== "NO");
-        setParcels(filtered);
+        setParcels(raw.filter((p) => p.DISPLAY !== "NO"));
         setLoading(false);
-
-        // If user already typed something before parcels loaded, re-run suggestions now
-        setQuery(prev => {
-          if (prev.trim()) {
-            const q = prev.split(",")[0].toLowerCase().trim();
-            setSuggestions(filtered.filter(p => parcelLabel(p).toLowerCase().includes(q)).slice(0, 6));
-          }
-          return prev;
-        });
-
-        const fid     = searchParams.get("fid");
-        const address = searchParams.get("address");
-        const latParam = searchParams.get("lat");
-        const lonParam = searchParams.get("lon");
-
-        if (address) setQuery(decodeURIComponent(address));
-
-        // Use lat/lon from URL to show map immediately (no parcel list match needed)
-        if (latParam && lonParam) {
-          setMapCoords({ lat: Number(latParam), lon: Number(lonParam) });
-        }
-
-        // Match parcel list for right-panel data
-        if (fid != null) {
-          const match = filtered.find(p => String(p.FID) === fid);
-          if (match) {
-            setSelected(match);
-            // Fallback coords from parcel if not in URL
-            if (!latParam && match.lat) setMapCoords({ lat: match.lat, lon: match.lon });
-          }
-        }
       })
       .catch(() => setLoading(false));
-  }, [serverUrl, searchParams]);
+  }, [serverUrl]);
 
   function handleQueryChange(value: string) {
     setQuery(value);
-    setSelected(null);
     if (!value.trim()) { setSuggestions([]); return; }
-    // Strip city/state suffix before matching (e.g. "123 Commerce St, Montgomery, AL" → "123 Commerce St")
     const q = value.split(",")[0].toLowerCase().trim();
     setSuggestions(
-      parcels.filter(p => parcelLabel(p).toLowerCase().includes(q)).slice(0, 6)
+      parcels.filter((p) => parcelLabel(p).toLowerCase().includes(q)).slice(0, 6),
     );
   }
 
   function handleSelect(p: RawParcel) {
-    setSelected(p);
-    setQuery(parcelLabel(p));
+    const stored: StoredParcel = {
+      fid:       p.FID,
+      parcelNum: p.PARCEL_NUM,
+      address:   parcelLabel(p),
+      lat:       p.lat,
+      lon:       p.lon,
+      rings:     p.rings ?? null,
+    };
+    localStorage.setItem("selectedParcel", JSON.stringify(stored));
+    setStoredParcel(stored);
+    setQuery("");
     setSuggestions([]);
-    if (p.lat && p.lon) setMapCoords({ lat: p.lat, lon: p.lon });
   }
 
   function handleAnalyze() {
     if (suggestions.length > 0) handleSelect(suggestions[0]);
   }
 
-  const incomeProfile  = selected ? getIncomeProfile(selected.FID)  : null;
-  const comparables    = selected ? getComparables(selected.FID)     : null;
-  const aiRec          = selected ? getAiRecommendation(selected.FID) : null;
+  // Analytics driven by stored FID
+  const fid          = storedParcel?.fid ?? null;
+  const incomeProfile = fid != null ? getIncomeProfile(fid) : null;
+  const comparables   = fid != null ? getComparables(fid)   : null;
+  const aiRec         = fid != null ? getAiRecommendation(fid) : null;
 
   return (
-    <div style={{ minHeight: "calc(100vh - 52px)", backgroundColor: "#f8f4eb", fontFamily: "'Lora', Georgia, serif" }}>
+    <div
+      style={{
+        minHeight: "calc(100vh - 52px)",
+        backgroundColor: "#f8f4eb",
+        fontFamily: "'Lora', Georgia, serif",
+      }}
+    >
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
-        {/* Heading */}
-        <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "#1a1a1a", marginBottom: "0.4rem" }}>
-          Score any location
-        </h1>
-        <p style={{ fontSize: "0.88rem", color: "#888", marginBottom: "1.5rem" }}>
-          Search any address or neighborhood — get instant parcel intelligence and AI recommendation
-        </p>
-
-        {/* Search bar */}
-        <div style={{ position: "relative", marginBottom: "0.75rem" }}>
-          <div style={{ display: "flex", gap: "0" }}>
-            <div style={{
-              flex: 1,
+        {/* ── Selected parcel banner (from CityMap) ── */}
+        {storedParcel ? (
+          <div
+            style={{
+              backgroundColor: "#0e3a47",
+              borderRadius: "8px",
+              padding: "1rem 1.25rem",
+              marginBottom: "1.5rem",
               display: "flex",
               alignItems: "center",
-              backgroundColor: "#fff",
-              border: "1.5px solid #ddd",
-              borderRight: "none",
-              borderRadius: "6px 0 0 6px",
-              padding: "0 1rem",
-            }}>
-              <span style={{ marginRight: "0.6rem", fontSize: "1rem" }}>🔍</span>
-              <input
-                value={query}
-                onChange={e => handleQueryChange(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleAnalyze()}
-                placeholder="e.g. 123 Commerce St, Montgomery, AL"
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div
                 style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  fontFamily: "'Lora', Georgia, serif",
-                  fontSize: "0.9rem",
-                  color: "#333",
-                  backgroundColor: "transparent",
-                  padding: "0.75rem 0",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.12em",
+                  color: "#c9a227",
+                  textTransform: "uppercase",
+                  marginBottom: "0.25rem",
                 }}
-              />
+              >
+                Selected parcel
+              </div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>
+                {storedParcel.address}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", marginTop: "0.2rem" }}>
+                {storedParcel.lat.toFixed(5)}, {storedParcel.lon.toFixed(5)}
+                {storedParcel.parcelNum ? ` · ${storedParcel.parcelNum}` : ""}
+              </div>
             </div>
             <button
-              onClick={handleAnalyze}
+              onClick={() => {
+                localStorage.removeItem("selectedParcel");
+                setStoredParcel(null);
+              }}
               style={{
-                backgroundColor: "#c9a227",
-                color: "#fff",
-                border: "none",
-                borderRadius: "0 6px 6px 0",
-                padding: "0 1.5rem",
-                fontFamily: "'Lora', Georgia, serif",
-                fontSize: "0.88rem",
-                fontWeight: 700,
-                letterSpacing: "0.03em",
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.5)",
+                borderRadius: "4px",
+                padding: "0.3rem 0.6rem",
                 cursor: "pointer",
-                whiteSpace: "nowrap",
+                fontSize: "0.72rem",
+                fontFamily: "'Lora', Georgia, serif",
+                flexShrink: 0,
               }}
             >
-              Analyze →
+              Clear
             </button>
           </div>
+        ) : (
+          <>
+            <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "#1a1a1a", marginBottom: "0.4rem" }}>
+              Score any location
+            </h1>
+            <p style={{ fontSize: "0.88rem", color: "#888", marginBottom: "1.5rem" }}>
+              Select a parcel on the City Map, or search below.
+            </p>
+          </>
+        )}
 
-          {/* Dropdown suggestions */}
-          {suggestions.length > 0 && (
-            <div style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 80,
-              backgroundColor: "#fff",
-              border: "1px solid #ddd",
-              borderTop: "none",
-              borderRadius: "0 0 6px 6px",
-              zIndex: 20,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-            }}>
-              {suggestions.map(p => (
-                <div
-                  key={p.FID}
-                  onClick={() => handleSelect(p)}
-                  style={{
-                    padding: "0.6rem 1rem",
-                    fontSize: "0.85rem",
-                    color: "#333",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fdf8ee")}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#fff")}
-                >
-                  {parcelLabel(p)}
-                  <span style={{ color: "#aaa", fontSize: "0.75rem", marginLeft: "0.5rem" }}>
-                    District {p.District} · {p.CALC_ACRE?.toFixed(2)} ac
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+       
 
-        {/* Main content grid */}
+        {/* ── Main content grid ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "2rem" }}>
 
-          {/* Left — map */}
-          <div style={{ borderRadius: "8px", minHeight: "360px", overflow: "hidden", position: "relative" }}>
-            {mapCoords ? (
-              <ParcelMap lat={mapCoords.lat} lon={mapCoords.lon} rings={selected?.rings} />
+          {/* Left — Leaflet map */}
+          <div style={{ height: "360px", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
+            {storedParcel ? (
+              <ParcelMap
+                key={storedParcel.fid}
+                lat={storedParcel.lat}
+                lon={storedParcel.lon}
+                address={storedParcel.address}
+              />
             ) : (
-              // Placeholder when no parcel selected
-              <div style={{
-                width: "100%", height: "100%", minHeight: "360px",
-                backgroundColor: "#e8e4d8",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                position: "relative",
-              }}>
-                <div style={{
-                  position: "absolute", inset: 0,
-                  backgroundImage: "linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }} />
-                <div style={{
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "#e8e4d8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   position: "relative",
-                  backgroundColor: "rgba(255,255,255,0.85)",
-                  borderRadius: "20px",
-                  padding: "0.5rem 1.25rem",
-                  fontSize: "0.82rem", color: "#555", fontStyle: "italic",
-                }}>
-                  {loading ? "Loading parcels…" : "Search an address above to view the map"}
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage:
+                      "linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)",
+                    backgroundSize: "40px 40px",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "relative",
+                    backgroundColor: "rgba(255,255,255,0.85)",
+                    borderRadius: "20px",
+                    padding: "0.5rem 1.25rem",
+                    fontSize: "0.82rem",
+                    color: "#555",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Select a parcel from the City Map to view it here
                 </div>
               </div>
             )}
@@ -349,25 +337,12 @@ export default function ParcelScore() {
 
             {/* Neighbourhood Income */}
             <div>
-              <div style={{
-                fontSize: "0.68rem",
-                letterSpacing: "0.12em",
-                color: "#999",
-                marginBottom: "0.75rem",
-                textTransform: "uppercase",
-              }}>
+              <div style={{ fontSize: "0.68rem", letterSpacing: "0.12em", color: "#999", marginBottom: "0.75rem", textTransform: "uppercase" }}>
                 Neighbourhood Income Profile
               </div>
               {incomeProfile ? (
-                incomeProfile.map(row => (
-                  <div key={row.label} style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "0.85rem",
-                    color: "#333",
-                    padding: "0.3rem 0",
-                    borderBottom: "1px solid #ede9dd",
-                  }}>
+                incomeProfile.map((row) => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#333", padding: "0.3rem 0", borderBottom: "1px solid #ede9dd" }}>
                     <span>{row.label}</span>
                     <span style={{ fontWeight: 600 }}>{row.value}</span>
                   </div>
@@ -381,25 +356,12 @@ export default function ParcelScore() {
 
             {/* Comparable Developments */}
             <div>
-              <div style={{
-                fontSize: "0.68rem",
-                letterSpacing: "0.12em",
-                color: "#999",
-                marginBottom: "0.75rem",
-                textTransform: "uppercase",
-              }}>
+              <div style={{ fontSize: "0.68rem", letterSpacing: "0.12em", color: "#999", marginBottom: "0.75rem", textTransform: "uppercase" }}>
                 Comparable Developments
               </div>
               {comparables ? (
-                comparables.map(row => (
-                  <div key={row.address} style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "0.85rem",
-                    color: "#333",
-                    padding: "0.3rem 0",
-                    borderBottom: "1px solid #ede9dd",
-                  }}>
+                comparables.map((row) => (
+                  <div key={row.address} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#333", padding: "0.3rem 0", borderBottom: "1px solid #ede9dd" }}>
                     <span>{row.address}</span>
                     <span style={{ fontWeight: 600 }}>{row.value}</span>
                   </div>
@@ -413,26 +375,11 @@ export default function ParcelScore() {
 
             {/* AI Recommendation */}
             <div>
-              <div style={{
-                fontSize: "0.68rem",
-                letterSpacing: "0.12em",
-                color: "#999",
-                marginBottom: "0.75rem",
-                textTransform: "uppercase",
-              }}>
+              <div style={{ fontSize: "0.68rem", letterSpacing: "0.12em", color: "#999", marginBottom: "0.75rem", textTransform: "uppercase" }}>
                 AI Recommendation
               </div>
               {aiRec ? (
-                <p style={{
-                  fontSize: "0.82rem",
-                  color: "#444",
-                  lineHeight: 1.7,
-                  backgroundColor: "#fff",
-                  border: "1px solid #ede9dd",
-                  borderRadius: "6px",
-                  padding: "0.85rem",
-                  margin: 0,
-                }}>
+                <p style={{ fontSize: "0.82rem", color: "#444", lineHeight: 1.7, backgroundColor: "#fff", border: "1px solid #ede9dd", borderRadius: "6px", padding: "0.85rem", margin: 0 }}>
                   {aiRec}
                 </p>
               ) : (
@@ -442,10 +389,10 @@ export default function ParcelScore() {
               )}
             </div>
 
-            {/* 311 Signals link */}
-            {selected && (
+            {/* 311 Signals — available whenever a parcel is stored */}
+            {storedParcel && (
               <button
-                onClick={() => navigate(`/311-signals?parcel_num=${encodeURIComponent(selected.PARCEL_NUM)}&address=${encodeURIComponent(parcelLabel(selected))}&lat=${selected.lat}&lon=${selected.lon}`)}
+                onClick={() => navigate("/311-signals")}
                 style={{
                   width: "100%",
                   backgroundColor: "#fef2f2",
@@ -463,7 +410,6 @@ export default function ParcelScore() {
                 View 311 distress signals →
               </button>
             )}
-
           </div>
         </div>
       </div>
