@@ -246,11 +246,42 @@ export default function Signals311() {
               fontSize: "2rem",
               fontWeight: 700,
               color: "#1a1a1a",
-              marginBottom: "0.3rem",
+              marginBottom: "0.75rem",
             }}
           >
             311 distress signals
           </h1>
+
+          {/* Selected parcel banner */}
+          <div
+            style={{
+              backgroundColor: "#0e3a47",
+              borderRadius: "8px",
+              padding: "0.75rem 1rem",
+              marginBottom: "1rem",
+              display: "inline-flex",
+              flexDirection: "column",
+              gap: "0.15rem",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.62rem",
+                letterSpacing: "0.12em",
+                color: "#c9a227",
+                textTransform: "uppercase",
+              }}
+            >
+              Selected parcel
+            </div>
+            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff" }}>
+              {parcelAddr}
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
+              {centerLat?.toFixed(13)}, {centerLon?.toFixed(13)}
+            </div>
+          </div>
+
           <p
             style={{
               fontSize: "0.82rem",
@@ -258,7 +289,7 @@ export default function Signals311() {
               marginBottom: "0.5rem",
             }}
           >
-            {parcelAddr}&nbsp;&middot;&nbsp;within {RADIUS_MILES} mi
+            Within {RADIUS_MILES} mi
             &nbsp;&middot;&nbsp;
             {loading
               ? `scanning ${totalFetched.toLocaleString()} records…`

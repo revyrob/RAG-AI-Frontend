@@ -205,7 +205,7 @@ export default function ParcelScore() {
   const incomeProfile = fid != null ? getIncomeProfile(fid) : null;
   const comparables   = fid != null ? getComparables(fid)   : null;
   const aiRec         = fid != null ? getAiRecommendation(fid) : null;
-
+console.log(storedParcel)
   return (
     <div
       style={{
@@ -245,7 +245,7 @@ export default function ParcelScore() {
                 {storedParcel.address}
               </div>
               <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", marginTop: "0.2rem" }}>
-                {storedParcel.lat.toFixed(5)}, {storedParcel.lon.toFixed(5)}
+                {storedParcel.lat.toFixed(13)}, {storedParcel.lon.toFixed(13)}
                 {storedParcel.parcelNum ? ` · ${storedParcel.parcelNum}` : ""}
               </div>
             </div>
